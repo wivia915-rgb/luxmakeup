@@ -1,4 +1,6 @@
 import { HeroStage } from "@/components/hero-stage";
+import { getLocale } from "@/lib/get-locale";
+import { messages } from "@/lib/messages";
 import { ArrowUpRight } from "lucide-react";
 
 const sparkles = [
@@ -16,7 +18,10 @@ const sparkles = [
   { left: "30%", top: "18%", size: 6, delay: 1.8, duration: 4.9 },
 ];
 
-export function Hero() {
+export async function Hero() {
+  const locale = await getLocale();
+  const hero = messages[locale].hero;
+
   return (
     <section className="relative isolate min-h-[100svh] overflow-hidden">
       <HeroStage />
@@ -47,15 +52,17 @@ export function Hero() {
       </div>
 
       <div className="pointer-events-none relative z-10 flex min-h-[100svh] flex-col justify-start px-5 pt-28 pb-16 md:px-10 lg:max-w-3xl lg:justify-center lg:pt-24">
-        <p className="lux-rise type-eyebrow">Maison de beauté</p>
+        <p className="lux-rise type-eyebrow">{hero.eyebrow}</p>
         <h1
-          aria-label="Redefine Elegance with Lux Makeup"
+          aria-label={`${hero.line1} ${hero.line2} ${hero.line3}`}
           className="mt-6 font-serif text-[clamp(3rem,7vw,6.25rem)] leading-[0.9] font-normal tracking-[-0.045em] text-foreground"
         >
-          <span className="block">Redefine</span>
-          <span className="block">Elegance</span>
-          <span className="type-italic mt-4 block text-[0.42em] leading-none tracking-[-0.03em] text-gold-bright">
-            with Lux Makeup
+          <span className="block">{hero.line1}</span>
+          <span className="block">{hero.line2}</span>
+          <span
+            className={`${locale === "ar" ? "font-serif" : "type-italic"} mt-4 block text-[0.42em] leading-none tracking-[-0.03em] text-gold-bright`}
+          >
+            {hero.line3}
           </span>
         </h1>
         <a
@@ -63,7 +70,7 @@ export function Hero() {
           className="type-nav pointer-events-auto lux-rise mt-10 inline-flex w-fit items-center gap-3 border border-[#E5C158]/45 bg-[#F8F8F8]/10 px-8 py-4 text-foreground shadow-[inset_0_1px_0_rgba(248,248,248,0.32),0_16px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-colors hover:-translate-y-0.5 hover:border-[#E5C158] hover:bg-[#F8F8F8]/20"
           style={{ animationDelay: "0.32s" }}
         >
-          Explore Collection
+          {hero.cta}
           <ArrowUpRight strokeWidth={1.25} size={16} aria-hidden />
         </a>
       </div>

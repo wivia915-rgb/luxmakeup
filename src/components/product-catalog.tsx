@@ -1,22 +1,26 @@
 import { CatalogControls } from "@/components/catalog-controls";
 import { ProductStill } from "@/components/product-still";
+import { getLocale } from "@/lib/get-locale";
+import { messages } from "@/lib/messages";
 import { getProductPage } from "@/lib/product-story";
 import { formatDh, products } from "@/lib/products";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function ProductCatalog() {
+export async function ProductCatalog() {
+  const copy = messages[await getLocale()];
+
   return (
     <section id="edit" className="scroll-mt-28 px-5 py-16 [content-visibility:auto] [contain-intrinsic-size:auto_2400px] md:px-10 md:py-20">
       <div className="mb-10 flex flex-col gap-4 md:mb-12 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="type-eyebrow">The collection</p>
-          <h2 className="type-headline mt-4">Shop the maison</h2>
+          <p className="type-eyebrow">{copy.catalog.eyebrow}</p>
+          <h2 className="type-headline mt-4">{copy.catalog.title}</h2>
         </div>
-        <p className="type-body max-w-sm">Makeup, parfum, and skin care. Prices in Moroccan dirhams (DH).</p>
+        <p className="type-body max-w-sm">{copy.catalog.lead}</p>
       </div>
 
-      <CatalogControls total={products.length} />
+      <CatalogControls total={products.length} copy={copy} />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {products.map((product) => (
@@ -32,26 +36,28 @@ export function ProductCatalog() {
               href={`/product/${product.id}`}
               prefetch={false}
               className="relative block aspect-[4/5] overflow-hidden"
-              aria-label={`View ${product.name}`}
+              aria-label={copy.catalog.view.replace("{name}", product.name)}
             >
               <div className="absolute inset-0 origin-center transition-transform duration-700 ease-out group-hover:scale-110 group-focus-within:scale-110">
                 <ProductStill motif={product.motif} name={product.name} />
               </div>
               <div className="pointer-events-none absolute top-4 left-4 flex flex-wrap gap-2">
-                {product.offer ? <GoldBadge solid>Offer</GoldBadge> : null}
-                <GoldBadge>{product.badge}</GoldBadge>
+                {product.offer ? <GoldBadge solid>{copy.catalog.offer}</GoldBadge> : null}
+                <GoldBadge>{copy.badges[product.badge] ?? product.badge}</GoldBadge>
               </div>
             </Link>
 
             <div className="flex flex-1 flex-col p-6 md:p-7">
-              <p className="type-caption">{product.category}</p>
+              <p className="type-caption">{copy.category[product.category]}</p>
               <h3 className="type-title mt-3">
                 <Link href={`/product/${product.id}`} prefetch={false}>
                   {product.name}
                 </Link>
               </h3>
-              <p className="type-italic mt-2 text-lg text-gold-bright">{product.moods.join(" · ")}</p>
-              <p className="type-body mt-4 flex-1">{product.description}</p>
+              <p className="type-italic mt-2 text-lg text-gold-bright">
+                {product.moods.map((mood) => copy.mood[mood]).join(" · ")}
+              </p>
+              <p className="type-body mt-4 flex-1">{copy.descriptions[product.id] ?? product.description}</p>
               <div className="mt-8 flex items-center justify-between gap-4">
                 <p className="type-price">{formatDh(product.price)}</p>
                 <button
@@ -63,7 +69,7 @@ export function ProductCatalog() {
                   data-badge={product.badge}
                   data-price={product.price}
                 >
-                  Quick Order
+                  {copy.catalog.quickOrder}
                 </button>
               </div>
             </div>

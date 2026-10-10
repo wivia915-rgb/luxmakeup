@@ -1,13 +1,14 @@
 "use client";
 
 import type { CodDrawerProps } from "@/components/cod-drawer";
+import { pieceCount, type Dictionary } from "@/lib/messages";
 import { categories, categoryFromHash, hashForCategory, moods, type Category, type Mood } from "@/lib/products";
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 
 const chip =
   "type-nav border px-4 py-3 text-foreground/80 transition-colors hover:border-gold-bright hover:text-gold-bright";
 
-export function CatalogControls({ total }: { total: number }) {
+export function CatalogControls({ total, copy }: { total: number; copy: Dictionary }) {
   const [category, setCategory] = useState<Category>("All");
   const [mood, setMood] = useState<Mood>("All");
   const [shown, setShown] = useState(total);
@@ -72,12 +73,12 @@ export function CatalogControls({ total }: { total: number }) {
     }
   }
 
-  const countLabel = shown === 1 ? "1 piece" : `${shown} pieces`;
+  const countLabel = pieceCount(copy.catalog, shown);
 
   return (
     <>
       <div className="flex flex-col gap-8 border-y border-gold/20 py-8">
-        <FilterGroup legend="Categories">
+        <FilterGroup legend={copy.catalog.categories}>
           {categories.map((item) => (
             <FilterChip
               key={item}
@@ -95,15 +96,15 @@ export function CatalogControls({ total }: { total: number }) {
               pressed={category === item}
               onClick={() => selectCategory(item)}
             >
-              {item}
+              {copy.category[item]}
             </FilterChip>
           ))}
         </FilterGroup>
 
-        <FilterGroup legend="Shop by Look / Mood">
+        <FilterGroup legend={copy.catalog.moods}>
           {moods.map((item) => (
             <FilterChip key={item} pressed={mood === item} onClick={() => setMood(item)}>
-              {item === "All" ? "All looks" : item}
+              {item === "All" ? copy.catalog.allLooks : copy.mood[item]}
             </FilterChip>
           ))}
         </FilterGroup>
@@ -115,8 +116,8 @@ export function CatalogControls({ total }: { total: number }) {
 
       {shown === 0 ? (
         <div className="mt-8 border border-gold/20 bg-card px-6 py-12 text-center">
-          <p className="type-title">Nothing in this edit</p>
-          <p className="type-body mx-auto mt-3 max-w-md">The maison has no piece in this pairing yet.</p>
+          <p className="type-title">{copy.catalog.emptyTitle}</p>
+          <p className="type-body mx-auto mt-3 max-w-md">{copy.catalog.emptyBody}</p>
           <button
             type="button"
             className={`${chip} mt-8 border-gold text-gold-bright`}
@@ -125,7 +126,7 @@ export function CatalogControls({ total }: { total: number }) {
               setMood("All");
             }}
           >
-            Show the full collection
+            {copy.catalog.showAll}
           </button>
         </div>
       ) : null}

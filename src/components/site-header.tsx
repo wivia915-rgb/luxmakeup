@@ -1,6 +1,8 @@
 "use client";
 
-import { navigation } from "@/lib/collection";
+import { LanguageSwitch } from "@/components/language-switch";
+import type { Locale } from "@/lib/locale";
+import type { Dictionary } from "@/lib/messages";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -8,8 +10,14 @@ import { useEffect, useState } from "react";
 const iconButton =
   "inline-flex size-10 shrink-0 items-center justify-center border border-gold/30 text-foreground transition-colors hover:border-gold-bright hover:text-gold-bright";
 
-export function SiteHeader() {
+export function SiteHeader({ locale, copy }: { locale: Locale; copy: Dictionary }) {
   const [open, setOpen] = useState(false);
+  const navigation = [
+    { href: "#makeup", label: copy.nav.makeup },
+    { href: "#parfums", label: copy.nav.parfums },
+    { href: "#skin-care", label: copy.nav.skin },
+    { href: "#maison", label: copy.nav.maison },
+  ];
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -30,7 +38,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-gold/20 bg-background/90 backdrop-blur-md">
       <p className="type-caption border-b border-gold/15 px-5 py-2 text-center text-gold-bright md:px-10">
-        Private clientele · Complimentary engraving on parfum
+        {copy.announcement}
       </p>
       <div className="flex items-center justify-between gap-3 px-5 py-4 md:px-10">
         <Link
@@ -49,10 +57,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button type="button" className={`${iconButton} hidden sm:inline-flex`} aria-label="Search the maison">
+          <LanguageSwitch locale={locale} label={copy.language} />
+          <button type="button" className={`${iconButton} hidden sm:inline-flex`} aria-label={copy.search}>
             <Search strokeWidth={1.25} size={18} />
           </button>
-          <button type="button" className={iconButton} aria-label="Shopping bag, empty">
+          <button type="button" className={iconButton} aria-label={copy.bag}>
             <ShoppingBag strokeWidth={1.25} size={18} />
           </button>
           <button
@@ -60,7 +69,7 @@ export function SiteHeader() {
             className={`${iconButton} md:hidden`}
             aria-expanded={open}
             aria-controls="mobile-navigation"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? copy.closeMenu : copy.openMenu}
             onClick={() => setOpen((value) => !value)}
           >
             {open ? <X strokeWidth={1.25} size={18} /> : <Menu strokeWidth={1.25} size={18} />}

@@ -1,4 +1,4 @@
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { Cormorant_Garamond, Noto_Naskh_Arabic, Outfit } from "next/font/google";
 
 /** Editorial serif for headlines. Preloaded because it paints the hero. */
 export const cormorant = Cormorant_Garamond({
@@ -38,6 +38,16 @@ export const outfit = Outfit({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-outfit",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: true,
+});
+
+/** Arabic companion. Latin faces stay first; this draws Arabic glyphs. */
+export const naskh = Noto_Naskh_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500"],
+  variable: "--font-arabic",
   display: "swap",
   preload: false,
   adjustFontFallback: true,

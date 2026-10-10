@@ -28,8 +28,8 @@
 */
 
 :root {
-  --lux-serif: var(--font-cormorant), "Iowan Old Style", Palatino, "Palatino Linotype", serif;
-  --lux-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --lux-serif: var(--font-cormorant), var(--font-arabic), "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  --lux-sans: var(--font-outfit), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme {

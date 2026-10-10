@@ -1,6 +1,8 @@
 import { MetaPixel } from "@/components/meta-pixel";
 import { SiteHeader } from "@/components/site-header";
-import { cormorant, cormorantItalic, cormorantMedium, outfit, outfitLight } from "@/lib/fonts";
+import { cormorant, cormorantItalic, cormorantMedium, naskh, outfit, outfitLight } from "@/lib/fonts";
+import { getLocale } from "@/lib/get-locale";
+import { messages } from "@/lib/messages";
 import { siteUrl } from "@/lib/site";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
@@ -35,15 +37,19 @@ export const viewport: Viewport = {
   themeColor: "#0D0D0D",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const locale = await getLocale();
+  const copy = messages[locale];
+
   return (
     <html
-      lang="en"
-      className={`${outfit.variable} ${outfitLight.variable} ${cormorant.variable} ${cormorantItalic.variable} ${cormorantMedium.variable} h-full`}
+      lang={locale}
+      dir={locale === "ar" ? "rtl" : "ltr"}
+      className={`${outfit.variable} ${outfitLight.variable} ${cormorant.variable} ${cormorantItalic.variable} ${cormorantMedium.variable} ${naskh.variable} h-full`}
     >
       <body className="min-h-full bg-background text-foreground antialiased">
         <MetaPixel />
@@ -51,10 +57,10 @@ export default function RootLayout({
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-gold focus:px-4 focus:py-2 focus:text-background"
         >
-          Skip to content
+          {copy.skip}
         </a>
         <div className="mx-auto min-h-screen xl:max-w-[90rem] xl:border-x xl:border-gold/20">
-          <SiteHeader />
+          <SiteHeader locale={locale} copy={copy} />
           {children}
         </div>
       </body>
