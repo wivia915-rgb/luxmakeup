@@ -1,77 +1,35 @@
-import { ProductDetail } from "@/components/product-detail";
-import { getProductPage } from "@/lib/product-story";
-import { formatDh, products } from "@/lib/products";
-import { siteUrl } from "@/lib/site";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { Hero } from "@/components/hero";
+import { ProductCatalog } from "@/components/product-catalog";
 
-type ProductPageProps = {
-  params: Promise<{ slug: string }>;
-};
-
-export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.id }));
-}
-
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = getProductPage(slug);
-  if (!product) {
-    return { title: "Piece unavailable" };
-  }
-
-  const url = `/product/${product.id}`;
-  const summary = `${product.description} ${formatDh(product.price)}.`;
-
-  return {
-    title: product.name,
-    description: product.description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "website",
-      url,
-      siteName: "Lux Makeup",
-      locale: "en_MA",
-      title: `${product.name} · Lux Makeup`,
-      description: summary,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${product.name} · Lux Makeup`,
-      description: summary,
-    },
-    other: {
-      "product:price:amount": String(product.price),
-      "product:price:currency": "MAD",
-    },
-  };
-}
-
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const product = getProductPage(slug);
-  if (!product) notFound();
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    category: product.category,
-    brand: { "@type": "Brand", name: "Lux Makeup" },
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "MAD",
-      price: product.price,
-      availability: "https://schema.org/InStock",
-      url: new URL(`/product/${product.id}`, siteUrl()).toString(),
-    },
-  };
-
+export default function Home() {
   return (
-    <main id="main">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <ProductDetail product={product} />
-    </main>
+    <>
+      <main id="main">
+        <Hero />
+        <ProductCatalog />
+
+        <section id="maison" className="scroll-mt-28 px-5 py-16 md:px-10 md:py-24">
+          <div className="border border-line bg-card px-7 py-14 md:px-16 md:py-20">
+            <p className="type-eyebrow">The maison</p>
+            <blockquote className="type-quote mt-8 max-w-3xl">
+              We finish the face the way a perfumer finishes a formula — one precise note at a time.
+            </blockquote>
+            <p className="type-body mt-8 max-w-xl">
+              Lux Makeup is an ultra-high-end house of complexion, fragrance, and color. The room stays dark so gold, pigment, and skin can speak.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-gold/20 px-5 py-10 md:px-10 md:py-14">
+        <hr className="rule-gold mb-10" />
+        <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+          <p className="font-serif text-3xl tracking-[0.16em] text-foreground uppercase">Lux Makeup</p>
+          <p className="type-caption max-w-xs">
+            Makeup, perfume, and beauty. Composed in a dark atelier.
+          </p>
+        </div>
+      </footer>
+    </>
   );
 }
