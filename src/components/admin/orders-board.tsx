@@ -3,8 +3,8 @@
 import { updateOrderStatus } from "@/app/actions/update-order-status";
 import { formatDh } from "@/lib/products";
 import {
+  isOrderStatus,
   orderStatusLabel,
-  orderStatuses,
   type DeskOrder,
   type OrderMetrics,
   type OrderStatusValue,
@@ -13,6 +13,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 const quickStatuses: OrderStatusValue[] = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
+
+const statusFilters = [
+  { id: "ALL", label: "All" },
+  { id: "PENDING", label: "Pending" },
+  { id: "SHIPPED", label: "Shipped" },
+  { id: "CANCELLED", label: "Cancelled" },
+] as const;
+
+type StatusFilter = (typeof statusFilters)[number]["id"];
 
 const badgeClass: Record<OrderStatusValue, string> = {
   PENDING: "border border-[#E5C158] text-[#E5C158]",
@@ -31,7 +40,8 @@ type OrdersBoardProps = {
 export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<OrderStatusValue | "ALL">("ALL");
+  const [status, setStatus] = useState<StatusFilter>("ALL");
+  const [overrides, setOverrides] = useState<Partial<Record<string, OrderStatusValue>>>({});
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -43,10 +53,26 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
     return () => window.clearInterval(timer);
   }, [router]);
 
+  useEffect(() => {
+    setOverrides((current) => {
+      const next = { ...current };
+      let changed = false;
+      for (const [id, value] of Object.entries(current)) {
+        const order = orders.find((item) => item.id === id);
+        if (order && value && order.status === value) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [orders]);
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return orders.filter((order) => {
-      if (status !== "ALL" && order.status !== status) return false;
+      const current = overrides[order.id] ?? order.status;
+      if (status !== "ALL" && current !== status) return false;
       if (!needle) return true;
       const haystack = [
         order.id,
@@ -60,15 +86,25 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [orders, query, status]);
+  }, [orders, overrides, query, status]);
 
   function changeStatus(orderId: string, next: OrderStatusValue) {
+    const order = orders.find((item) => item.id === orderId);
+    const previous = overrides[orderId] ?? order?.status;
+    if (!previous || previous === next) return;
     setNotice(null);
+    setOverrides((current) => ({ ...current, [orderId]: next }));
     setPendingId(orderId);
     startTransition(async () => {
       const result = await updateOrderStatus(orderId, next);
       setPendingId(null);
       if (!result.ok) {
+        setOverrides((current) => {
+          const copy = { ...current };
+          if (previous === order?.status) delete copy[orderId];
+          else copy[orderId] = previous;
+          return copy;
+        });
         setNotice(result.error);
         return;
       }
@@ -111,13 +147,10 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
             className="mt-2 w-full border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
           />
         </label>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
-          <FilterChip pressed={status === "ALL"} onClick={() => setStatus("ALL")}>
-            All
-          </FilterChip>
-          {orderStatuses.map((item) => (
-            <FilterChip key={item} pressed={status === item} onClick={() => setStatus(item)}>
-              {orderStatusLabel[item]}
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by status">
+          {statusFilters.map((item) => (
+            <FilterChip key={item.id} pressed={status === item.id} onClick={() => setStatus(item.id)}>
+              {item.label}
             </FilterChip>
           ))}
         </div>
@@ -133,84 +166,115 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
         {visible.length === 1 ? "1 order" : `${visible.length} orders`}
       </p>
 
-      <div className="mt-4 overflow-x-auto border border-gold/20">
-        <table className="w-full min-w-[860px] border-collapse text-left">
+      <div className="mt-4 space-y-3 md:hidden">
+        {visible.length === 0 ? (
+          <p className="type-body border border-gold/20 px-4 py-10">No orders match this desk view.</p>
+        ) : (
+          visible.map((order) => {
+            const current = overrides[order.id] ?? order.status;
+            return (
+              <article key={order.id} className="border border-gold/20 bg-card px-4 py-4">
+                <p className="type-caption break-all text-foreground">{order.id}</p>
+                <p className="mt-3 text-sm text-foreground">{order.customerName}</p>
+                <p className="type-caption mt-1">{order.phone}</p>
+                <p className="type-caption">{order.city}</p>
+                <p className="type-price mt-3">{formatDh(order.totalAmount)}</p>
+                <p className="type-caption mt-2">{formatWhen(order.createdAt)}</p>
+                <div className="mt-3">
+                  <StatusField
+                    orderId={order.id}
+                    status={current}
+                    busy={isPending && pendingId === order.id}
+                    onChange={(next) => changeStatus(order.id, next)}
+                  />
+                </div>
+              </article>
+            );
+          })
+        )}
+      </div>
+
+      <div className="mt-4 hidden overflow-x-auto border border-gold/20 md:block">
+        <table className="w-full min-w-[880px] border-collapse text-left">
           <thead className="bg-card">
             <tr className="type-eyebrow text-[0.62rem]">
-              <th className="px-4 py-3 font-medium">Order</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Pieces</th>
-              <th className="px-4 py-3 font-medium">Total</th>
+              <th className="px-4 py-3 font-medium">Order ID</th>
+              <th className="px-4 py-3 font-medium">Customer Name</th>
+              <th className="px-4 py-3 font-medium">Phone</th>
+              <th className="px-4 py-3 font-medium">City</th>
+              <th className="px-4 py-3 font-medium">Total Price</th>
               <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
+              <th className="px-4 py-3 font-medium">Date</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={6} className="type-body px-4 py-10">
+                <td colSpan={7} className="type-body px-4 py-10">
                   No orders match this desk view.
                 </td>
               </tr>
             ) : (
-              visible.map((order) => (
-                <tr key={order.id} className="border-t border-gold/15 align-top">
-                  <td className="px-4 py-4">
-                    <p className="type-caption text-foreground">{order.id.slice(0, 8)}</p>
-                    <p className="type-caption mt-1">{formatWhen(order.createdAt)}</p>
-                  </td>
-                  <td className="px-4 py-4">
-                    <p className="text-sm text-foreground">{order.customerName}</p>
-                    <p className="type-caption mt-1">{order.phone}</p>
-                    <p className="type-caption">{order.city}</p>
-                  </td>
-                  <td className="px-4 py-4">
-                    <ul className="space-y-1">
-                      {order.items.map((item, index) => (
-                        <li key={`${order.id}-${index}`} className="text-sm text-foreground/85">
-                          {item.title}
-                          <span className="type-caption"> · {item.shadeName} · ×{item.quantity}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="type-price px-4 py-4">{formatDh(order.totalAmount)}</td>
-                  <td className="px-4 py-4">
-                    <span className={`type-caption inline-flex px-2.5 py-1 ${badgeClass[order.status]}`}>
-                      {orderStatusLabel[order.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      {quickStatuses.map((next) => (
-                        <button
-                          key={next}
-                          type="button"
-                          disabled={order.status === next || (isPending && pendingId === order.id)}
-                          aria-label={`Set order ${order.id.slice(0, 8)} to ${orderStatusLabel[next]}`}
-                          onClick={() => changeStatus(order.id, next)}
-                          className="type-caption border border-gold/30 px-2.5 py-1.5 text-foreground transition-colors hover:border-gold-bright hover:text-gold-bright disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {orderStatusLabel[next]}
-                        </button>
-                      ))}
-                      <a
-                        href={order.whatsappUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="type-caption border border-[#E5C158] px-2.5 py-1.5 text-[#E5C158]"
-                        aria-label={`WhatsApp ${order.customerName}`}
-                      >
-                        WhatsApp
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              visible.map((order) => {
+                const current = overrides[order.id] ?? order.status;
+                return (
+                  <tr key={order.id} className="border-t border-gold/15 align-top">
+                    <td className="type-caption max-w-40 px-4 py-4 break-all text-foreground">{order.id}</td>
+                    <td className="px-4 py-4 text-sm text-foreground">{order.customerName}</td>
+                    <td className="type-caption px-4 py-4 text-foreground/85">{order.phone}</td>
+                    <td className="px-4 py-4 text-sm text-foreground/85">{order.city}</td>
+                    <td className="type-price px-4 py-4">{formatDh(order.totalAmount)}</td>
+                    <td className="px-4 py-4">
+                      <StatusField
+                        orderId={order.id}
+                        status={current}
+                        busy={isPending && pendingId === order.id}
+                        onChange={(next) => changeStatus(order.id, next)}
+                      />
+                    </td>
+                    <td className="type-caption px-4 py-4 text-foreground/80">{formatWhen(order.createdAt)}</td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function StatusField({
+  orderId,
+  status,
+  busy,
+  onChange,
+}: {
+  orderId: string;
+  status: OrderStatusValue;
+  busy: boolean;
+  onChange: (next: OrderStatusValue) => void;
+}) {
+  const options: OrderStatusValue[] = status === "CONFIRMED" ? ["CONFIRMED", ...quickStatuses] : quickStatuses;
+
+  return (
+    <div className="flex min-w-36 flex-col items-start gap-2">
+      <span className={`type-caption inline-flex px-2.5 py-1 ${badgeClass[status]}`}>{orderStatusLabel[status]}</span>
+      <select
+        value={status}
+        disabled={busy}
+        aria-label={`Set status for order ${orderId.slice(0, 8)}`}
+        onChange={(event) => {
+          if (isOrderStatus(event.target.value)) onChange(event.target.value);
+        }}
+        className="w-full border border-gold/30 bg-[#0D0D0D] px-2 py-1.5 text-xs text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158] disabled:opacity-40"
+      >
+        {options.map((item) => (
+          <option key={item} value={item}>
+            {orderStatusLabel[item]}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -236,7 +300,8 @@ function FilterChip({
   return (
     <button
       type="button"
-      aria-pressed={pressed}
+      role="tab"
+      aria-selected={pressed}
       onClick={onClick}
       className={`type-nav border px-3 py-2 ${pressed ? "border-gold-bright bg-gold/10 text-gold-bright" : "border-gold/25 text-foreground/80"}`}
     >

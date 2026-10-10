@@ -24,7 +24,6 @@ export async function getOrderDesk(): Promise<OrderDeskData> {
       prisma.order.count({ where: { status: "DELIVERED" } }),
       prisma.order.findMany({
         orderBy: { createdAt: "desc" },
-        take: 200,
         include: {
           items: {
             select: { title: true, shadeName: true, quantity: true },

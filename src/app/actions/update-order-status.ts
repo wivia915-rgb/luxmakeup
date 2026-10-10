@@ -26,5 +26,6 @@ export async function updateOrderStatus(
   }
 
   revalidatePath("/admin/orders");
+  revalidatePath("/admin");
   return { ok: true };
 }
