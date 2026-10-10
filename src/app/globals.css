@@ -1,26 +1,252 @@
 @import "tailwindcss";
 
+/*
+  Lux Makeup — dark chic design system
+
+  Palette
+  --color-background   #0D0D0D   page
+  --color-card         #1A1A1A   cards and panels
+  --color-gold         #D4AF37   primary gold
+  --color-gold-bright  #E5C158   highlight gold
+  --color-foreground   #F8F8F8   text
+  --color-muted        ivory mixed into ink, for secondary copy
+  --color-line         gold mixed into card, for hairline borders
+
+  Typography (reusable classes)
+  .type-display    hero serif
+  .type-headline   section serif
+  .type-title      product / card serif
+  .type-quote      italic editorial serif
+  .type-italic     italic serif modifier
+  .type-eyebrow    gold small-caps sans
+  .type-lead       light introductory sans
+  .type-body       reading sans
+  .type-caption    meta sans
+  .type-nav        tracked uppercase sans
+  .type-price      gold price sans
+  .rule-gold       hairline gold gradient
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --lux-serif: var(--font-cormorant), "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  --lux-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+  --color-background: #0D0D0D;
+  --color-card: #1A1A1A;
+  --color-gold: #D4AF37;
+  --color-gold-bright: #E5C158;
+  --color-foreground: #F8F8F8;
+  --color-muted: color-mix(in srgb, #F8F8F8 68%, #0D0D0D);
+  --color-line: color-mix(in srgb, #D4AF37 28%, #1A1A1A);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--lux-sans);
+  --font-serif: var(--lux-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    color-scheme: dark;
+    background: #0D0D0D;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    min-height: 100%;
+    background: #0D0D0D;
+    color: #F8F8F8;
+    font-family: var(--lux-sans);
+    font-weight: 400;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: #D4AF37;
+    color: #0D0D0D;
+  }
+
+  :focus-visible {
+    outline: 1px solid #E5C158;
+    outline-offset: 3px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .type-display {
+    font-family: var(--lux-serif);
+    font-weight: 400;
+    font-size: clamp(3.25rem, 9vw, 8.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    color: #F8F8F8;
+    padding-bottom: 0.06em;
+  }
+
+  .type-headline {
+    font-family: var(--lux-serif);
+    font-weight: 400;
+    font-size: clamp(2.25rem, 4.6vw, 4.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: #F8F8F8;
+  }
+
+  .type-title {
+    font-family: var(--font-cormorant-medium), var(--lux-serif);
+    font-weight: 500;
+    font-size: clamp(1.75rem, 2.2vw, 2.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #F8F8F8;
+  }
+
+  .type-quote {
+    font-family: var(--font-cormorant-italic), var(--lux-serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.75rem, 3vw, 2.85rem);
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    color: #F8F8F8;
+  }
+
+  .type-italic {
+    font-family: var(--font-cormorant-italic), var(--lux-serif);
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .type-eyebrow {
+    font-family: var(--lux-sans);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #E5C158;
+  }
+
+  .type-lead {
+    font-family: var(--font-outfit-light), var(--lux-sans);
+    font-weight: 300;
+    font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+    color: color-mix(in srgb, #F8F8F8 78%, #0D0D0D);
+  }
+
+  .type-body {
+    font-family: var(--lux-sans);
+    font-weight: 400;
+    font-size: 0.9375rem;
+    line-height: 1.75;
+    color: color-mix(in srgb, #F8F8F8 80%, #0D0D0D);
+  }
+
+  .type-caption {
+    font-family: var(--lux-sans);
+    font-weight: 400;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, #F8F8F8 62%, #0D0D0D);
+  }
+
+  .type-nav {
+    font-family: var(--lux-sans);
+    font-weight: 400;
+    font-size: 0.75rem;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .type-price {
+    font-family: var(--lux-sans);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    color: #D4AF37;
+  }
+
+  .rule-gold {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      #D4AF37 18%,
+      #E5C158 50%,
+      #D4AF37 82%,
+      transparent
+    );
+  }
+}
+
+@keyframes lux-rise {
+  from {
+    transform: translateY(16px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.lux-rise {
+  animation: lux-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lux-spark {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-18px);
+  }
+}
+
+.lux-spark {
+  animation-name: lux-spark;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes lux-tip {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(8deg) scale(1.08);
+  }
+}
+
+.lux-tip {
+  animation: lux-tip 1.15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lux-rise,
+  .lux-spark,
+  .lux-tip {
+    animation: none;
+  }
+
+  .lux-spark {
+    opacity: 0.45;
+  }
 }
