@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Settings",
-  description: "Lux Makeup house settings for the banner, delivery, and contact.",
+  description: "Lux Makeup house settings for banners, delivery fees, and pixels.",
 };
 
 export default async function AdminSettingsPage() {

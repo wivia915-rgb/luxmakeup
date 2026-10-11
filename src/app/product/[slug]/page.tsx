@@ -1,5 +1,6 @@
 import { ProductDetail } from "@/components/product-detail";
 import { getProductPage } from "@/lib/product-story";
+import { shippingRatesFrom } from "@/lib/cod";
 import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh, products } from "@/lib/products";
 import { siteUrl } from "@/lib/site";
@@ -73,7 +74,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main id="main">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <ProductDetail product={product} freeShippingThreshold={settings.freeShippingThreshold} />
+      <ProductDetail product={product} shippingRates={shippingRatesFrom(settings)} />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { deliveryFee, resolveCity, validateCod } from "@/lib/cod";
+import { deliveryFee, resolveCity, shippingRatesFrom, validateCod } from "@/lib/cod";
 import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh } from "@/lib/products";
 import { getProductPage } from "@/lib/product-story";
@@ -58,7 +58,7 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
 
   const merchandiseDh = product.price * input.quantity;
   const settings = await getStoreSettings();
-  const deliveryDh = deliveryFee(city, merchandiseDh, settings.freeShippingThreshold) ?? customer.delivery;
+  const deliveryDh = deliveryFee(city, merchandiseDh, shippingRatesFrom(settings)) ?? customer.delivery;
   const totalDh = merchandiseDh + deliveryDh;
 
   let orderId: string;

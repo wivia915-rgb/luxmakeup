@@ -2,13 +2,14 @@
 
 import type { CodDrawerProps } from "@/components/cod-drawer";
 import { pieceCount, type Dictionary } from "@/lib/messages";
+import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
 import { categories, categoryFromHash, hashForCategory, moods, type Category, type Mood } from "@/lib/products";
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 
 const chip =
   "type-nav border px-4 py-3 text-foreground/80 transition-colors hover:border-gold-bright hover:text-gold-bright";
 
-export function CatalogControls({ total, copy, freeShippingThreshold = 0 }: { total: number; copy: Dictionary; freeShippingThreshold?: number }) {
+export function CatalogControls({ total, copy, shippingRates = defaultShippingRates }: { total: number; copy: Dictionary; shippingRates?: ShippingRates }) {
   const [category, setCategory] = useState<Category>("All");
   const [mood, setMood] = useState<Mood>("All");
   const [shown, setShown] = useState(total);
@@ -131,7 +132,7 @@ export function CatalogControls({ total, copy, freeShippingThreshold = 0 }: { to
         </div>
       ) : null}
 
-      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} freeShippingThreshold={freeShippingThreshold} /> : null}
+      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} shippingRates={shippingRates} /> : null}
     </>
   );
 }

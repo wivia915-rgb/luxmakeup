@@ -23,9 +23,19 @@ declare global {
   }
 }
 
-export function metaPixelId() {
+let activePixelId = "";
+
+function envPixelId() {
   const raw = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() ?? "";
   return /^\d{5,20}$/.test(raw) ? raw : "";
+}
+
+export function activateMetaPixel(id: string) {
+  activePixelId = /^\d{5,20}$/.test(id) ? id : "";
+}
+
+export function metaPixelId() {
+  return activePixelId || envPixelId();
 }
 
 export function trackMeta(event: MetaEventName, params?: MetaParams) {

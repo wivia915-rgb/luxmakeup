@@ -1,7 +1,7 @@
 "use client";
 
 import { placeCodOrder } from "@/app/actions/place-cod-order";
-import { deliveryFee, filterCities, resolveCity, validateCod, type CodFields } from "@/lib/cod";
+import { defaultShippingRates, deliveryFee, filterCities, resolveCity, validateCod, type CodFields, type ShippingRates } from "@/lib/cod";
 import { trackCommerce } from "@/lib/meta";
 import { formatDh } from "@/lib/products";
 import { AnimatePresence, motion } from "framer-motion";
@@ -26,12 +26,12 @@ export type CodDrawerProps = {
   open: boolean;
   line: CodLine;
   onClose: () => void;
-  freeShippingThreshold?: number;
+  shippingRates?: ShippingRates;
 };
 
 const emptyFields: CodFields = { name: "", phone: "", city: "", address: "" };
 
-export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: CodDrawerProps) {
+export function CodDrawer({ open, line, onClose, shippingRates = defaultShippingRates }: CodDrawerProps) {
   const titleId = useId();
   const listId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -49,8 +49,8 @@ export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: Co
   const suggestions = useMemo(() => filterCities(fields.city), [fields.city]);
   const check = validateCod(fields);
   const resolvedCity = resolveCity(fields.city);
-  const fee = resolvedCity ? deliveryFee(resolvedCity, line.merchandise, freeShippingThreshold) : null;
-  const freeByThreshold = freeShippingThreshold > 0 && line.merchandise >= freeShippingThreshold;
+  const fee = resolvedCity ? deliveryFee(resolvedCity, line.merchandise, shippingRates) : null;
+  const freeByThreshold = shippingRates.freeThreshold > 0 && line.merchandise >= shippingRates.freeThreshold;
   const payable = fee === null ? null : line.merchandise + fee;
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: Co
             {placed ? (
               <div className="px-5 py-8">
                 <p className="type-body">
-                  Order placed for {line.name}. Pay {formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, freeShippingThreshold) ?? 0))} in cash when it arrives in{" "}
+                  Order placed for {line.name}. Pay {formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, shippingRates) ?? 0))} in cash when it arrives in{" "}
                   {resolveCity(placed.city)}.
                 </p>
                 <p className="type-caption mt-4">
@@ -320,7 +320,9 @@ export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: Co
                                 onClick={() => chooseCity(city)}
                               >
                                 <span>{city}</span>
-                                <span className="type-caption">{deliveryFee(city, line.merchandise, freeShippingThreshold) === 0 ? "Free" : formatDh(deliveryFee(city, line.merchandise, freeShippingThreshold) ?? 0)}</span>
+                                <span className="type-caption">
+                                  {deliveryFee(city, line.merchandise, shippingRates) === 0 ? "Free" : formatDh(deliveryFee(city, line.merchandise, shippingRates) ?? 0)}
+                                </span>
                               </button>
                             </li>
                           ))
@@ -352,7 +354,7 @@ export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: Co
                     <div className="flex items-center justify-between gap-4">
                       <dt className="type-caption">Delivery</dt>
                       <dd className="type-caption text-gold-bright">
-                        {fee === null ? "Choose a city" : fee === 0 ? (freeByThreshold ? "Free" : "Free in Fès") : formatDh(fee)}
+                        {fee === null ? "Choose a city" : fee === 0 ? (freeByThreshold || resolvedCity !== "Fès" ? "Free" : "Free in Fès") : formatDh(fee)}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4 pt-2">

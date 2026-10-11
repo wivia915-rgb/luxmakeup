@@ -1,34 +1,62 @@
 export const STANDARD_DELIVERY_DH = 35;
 
 const cities = [
-  { name: "Fès", aliases: ["fes", "fez"] },
-  { name: "Casablanca", aliases: ["casa"] },
-  { name: "Rabat", aliases: [] },
-  { name: "Salé", aliases: ["sale"] },
-  { name: "Témara", aliases: ["temara"] },
-  { name: "Marrakech", aliases: ["marrakesh"] },
-  { name: "Tanger", aliases: ["tangier", "tangiers"] },
-  { name: "Agadir", aliases: [] },
-  { name: "Meknès", aliases: ["meknes"] },
-  { name: "Oujda", aliases: [] },
-  { name: "Tétouan", aliases: ["tetouan"] },
-  { name: "Kénitra", aliases: ["kenitra"] },
-  { name: "Mohammedia", aliases: [] },
-  { name: "Safi", aliases: [] },
-  { name: "El Jadida", aliases: ["eljadida"] },
-  { name: "Nador", aliases: [] },
-  { name: "Beni Mellal", aliases: ["beni-mellal"] },
-  { name: "Khouribga", aliases: [] },
-  { name: "Taza", aliases: [] },
-  { name: "Settat", aliases: [] },
-  { name: "Larache", aliases: [] },
-  { name: "Essaouira", aliases: [] },
-  { name: "Ouarzazate", aliases: [] },
-  { name: "Al Hoceïma", aliases: ["alhoceima", "al hoceima"] },
-  { name: "Errachidia", aliases: [] },
-  { name: "Laâyoune", aliases: ["laayoune"] },
-  { name: "Dakhla", aliases: [] },
+  { name: "Fès", aliases: ["fes", "fez"], region: "local" },
+  { name: "Casablanca", aliases: ["casa"], region: "standard" },
+  { name: "Rabat", aliases: [], region: "standard" },
+  { name: "Salé", aliases: ["sale"], region: "standard" },
+  { name: "Témara", aliases: ["temara"], region: "standard" },
+  { name: "Marrakech", aliases: ["marrakesh"], region: "standard" },
+  { name: "Tanger", aliases: ["tangier", "tangiers"], region: "standard" },
+  { name: "Agadir", aliases: [], region: "standard" },
+  { name: "Meknès", aliases: ["meknes"], region: "standard" },
+  { name: "Oujda", aliases: [], region: "standard" },
+  { name: "Tétouan", aliases: ["tetouan"], region: "standard" },
+  { name: "Kénitra", aliases: ["kenitra"], region: "standard" },
+  { name: "Mohammedia", aliases: [], region: "standard" },
+  { name: "Safi", aliases: [], region: "remote" },
+  { name: "El Jadida", aliases: ["eljadida"], region: "remote" },
+  { name: "Nador", aliases: [], region: "remote" },
+  { name: "Beni Mellal", aliases: ["beni-mellal"], region: "remote" },
+  { name: "Khouribga", aliases: [], region: "remote" },
+  { name: "Taza", aliases: [], region: "remote" },
+  { name: "Settat", aliases: [], region: "remote" },
+  { name: "Larache", aliases: [], region: "remote" },
+  { name: "Essaouira", aliases: [], region: "remote" },
+  { name: "Ouarzazate", aliases: [], region: "remote" },
+  { name: "Al Hoceïma", aliases: ["alhoceima", "al hoceima"], region: "remote" },
+  { name: "Errachidia", aliases: [], region: "remote" },
+  { name: "Laâyoune", aliases: ["laayoune"], region: "remote" },
+  { name: "Dakhla", aliases: [], region: "remote" },
 ] as const;
+
+export type ShippingRates = {
+  localFee: number;
+  standardFee: number;
+  remoteFee: number;
+  freeThreshold: number;
+};
+
+export const defaultShippingRates: ShippingRates = {
+  localFee: 0,
+  standardFee: STANDARD_DELIVERY_DH,
+  remoteFee: 45,
+  freeThreshold: 0,
+};
+
+export function shippingRatesFrom(input: {
+  localShippingFee: number;
+  standardShippingFee: number;
+  remoteShippingFee: number;
+  freeShippingThreshold: number;
+}): ShippingRates {
+  return {
+    localFee: input.localShippingFee,
+    standardFee: input.standardShippingFee,
+    remoteFee: input.remoteShippingFee,
+    freeThreshold: input.freeShippingThreshold,
+  };
+}
 
 export const moroccanCities = cities.map((city) => city.name);
 
@@ -65,11 +93,14 @@ export function filterCities(query: string): string[] {
     .map((city) => city.name);
 }
 
-export function deliveryFee(city: string, merchandiseDh = 0, freeShippingThreshold = 0): number | null {
+export function deliveryFee(city: string, merchandiseDh = 0, rates: ShippingRates = defaultShippingRates): number | null {
   const resolved = resolveCity(city);
   if (!resolved) return null;
-  if (freeShippingThreshold > 0 && merchandiseDh >= freeShippingThreshold) return 0;
-  return foldCity(resolved) === foldCity("Fès") ? 0 : STANDARD_DELIVERY_DH;
+  if (rates.freeThreshold > 0 && merchandiseDh >= rates.freeThreshold) return 0;
+  const region = cities.find((item) => item.name === resolved)?.region ?? "remote";
+  if (region === "local") return rates.localFee;
+  if (region === "remote") return rates.remoteFee;
+  return rates.standardFee;
 }
 
 export function validateCod(fields: CodFields): { errors: CodErrors; delivery: number | null; valid: boolean } {

@@ -3,6 +3,7 @@
 import type { CodDrawerProps } from "@/components/cod-drawer";
 import { ProductStage } from "@/components/product-stage";
 import type { IngredientIcon, ProductPageData, Shade } from "@/lib/product-story";
+import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
 import { formatDh } from "@/lib/products";
 import { trackCommerce } from "@/lib/meta";
 import { Droplets, Flower2, Gem, Leaf, Minus, Plus, Sparkles, SunMedium } from "lucide-react";
@@ -18,7 +19,7 @@ const icons = {
   flower: Flower2,
 } as const;
 
-export function ProductDetail({ product, freeShippingThreshold = 0 }: { product: ProductPageData; freeShippingThreshold?: number }) {
+export function ProductDetail({ product, shippingRates = defaultShippingRates }: { product: ProductPageData; shippingRates?: ShippingRates }) {
   const [shade, setShade] = useState<Shade>(product.shades[0]);
   const [quantity, setQuantity] = useState(1);
   const [ordering, setOrdering] = useState(false);
@@ -107,7 +108,7 @@ export function ProductDetail({ product, freeShippingThreshold = 0 }: { product:
             detail: `${shade.name} · ×${quantity}`,
             merchandise: product.price * quantity,
           }}
-          freeShippingThreshold={freeShippingThreshold}
+          shippingRates={shippingRates}
         />
       ) : null}
     </>

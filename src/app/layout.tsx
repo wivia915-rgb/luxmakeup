@@ -5,7 +5,7 @@ import { cormorant, cormorantItalic, cormorantMedium, naskh, outfit, outfitLight
 import { getLocale } from "@/lib/get-locale";
 import { messages } from "@/lib/messages";
 import { siteUrl } from "@/lib/site";
-import { getStoreSettings } from "@/lib/store-settings";
+import { announcementFor, getStoreSettings } from "@/lib/store-settings";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -55,7 +55,7 @@ export default async function RootLayout({
       className={`${outfit.variable} ${outfitLight.variable} ${cormorant.variable} ${cormorantItalic.variable} ${cormorantMedium.variable} ${naskh.variable} h-full`}
     >
       <body className="min-h-full bg-background text-foreground antialiased">
-        <MetaPixel />
+        <MetaPixel facebookId={settings.facebookPixelId} tiktokId={settings.tiktokPixelId} />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-gold focus:px-4 focus:py-2 focus:text-background"
@@ -66,7 +66,7 @@ export default async function RootLayout({
           <SiteHeader
             locale={locale}
             copy={copy}
-            banner={settings.announcement}
+            banner={announcementFor(settings, locale)}
             whatsapp={settings.whatsapp}
             email={settings.supportEmail}
           />

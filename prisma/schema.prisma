@@ -134,9 +134,17 @@ model Coupon {
 model StoreSettings {
   id                    String   @id @default("store")
   announcement          String   @default("")
+  announcementAr        String   @default("")
+  announcementFr        String   @default("")
+  announcementEn        String   @default("")
   freeShippingThreshold Int      @default(0)
+  localShippingFee      Int      @default(0)
+  standardShippingFee   Int      @default(35)
+  remoteShippingFee     Int      @default(45)
   whatsapp              String   @default("")
   supportEmail          String   @default("")
+  facebookPixelId       String   @default("")
+  tiktokPixelId         String   @default("")
   maintenanceMode       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 
