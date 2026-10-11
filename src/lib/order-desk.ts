@@ -39,9 +39,16 @@ export function isOrderStatus(value: string): value is OrderStatusValue {
   return orderStatuses.some((status) => status === value);
 }
 
-export function customerWhatsAppUrl(phone: string, name: string, orderId: string) {
+export function moroccanWhatsAppDigits(phone: string) {
   let digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0")) digits = `212${digits.slice(1)}`;
-  const text = `Hello ${name}, this is Lux Makeup regarding order ${orderId.slice(0, 8)}.`;
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("212")) return digits;
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  return `212${digits}`;
+}
+
+export function customerWhatsAppUrl(phone: string, name: string, orderId: string, productName: string) {
+  const product = productName.trim() || "الطلب";
+  const text = `سلام ${name}، معاك متجر LuxMakeup. كنشكروك على الطلب ديالك رقم #${orderId} (${product}). بغينا ناكدو معاك العنوان ومدينتك لتسليم الطلب.`;
+  return `https://wa.me/${moroccanWhatsAppDigits(phone)}?text=${encodeURIComponent(text)}`;
 }

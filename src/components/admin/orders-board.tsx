@@ -1,6 +1,8 @@
 "use client";
 
 import { updateOrderStatus } from "@/app/actions/update-order-status";
+import { ShippingSlip } from "@/components/admin/shipping-slip";
+import { downloadOrdersCsv } from "@/lib/order-export";
 import { formatDh } from "@/lib/products";
 import {
   isOrderStatus,
@@ -44,6 +46,7 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
   const [overrides, setOverrides] = useState<Partial<Record<string, OrderStatusValue>>>({});
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [slip, setSlip] = useState<DeskOrder | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -119,10 +122,20 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
           <p className="type-eyebrow">Orders</p>
           <h1 className="type-headline mt-3">The desk</h1>
         </div>
-        <p className="type-caption inline-flex items-center gap-2">
-          <span className="size-1.5 animate-pulse bg-[#E5C158]" aria-hidden />
-          Live · refreshes every few seconds
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={visible.length === 0}
+            onClick={() => downloadOrdersCsv(visible, (order) => overrides[order.id] ?? order.status)}
+            className="type-nav border border-gold-bright px-4 py-3 text-gold-bright transition-colors hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Export orders (CSV)
+          </button>
+          <p className="type-caption inline-flex items-center gap-2">
+            <span className="size-1.5 animate-pulse bg-[#E5C158]" aria-hidden />
+            Live · refreshes every few seconds
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3" aria-live="polite">
@@ -176,10 +189,20 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
               <article key={order.id} className="border border-gold/20 bg-card px-4 py-4">
                 <p className="type-caption break-all text-foreground">{order.id}</p>
                 <p className="mt-3 text-sm text-foreground">{order.customerName}</p>
-                <p className="type-caption mt-1">{order.phone}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <p className="type-caption">{order.phone}</p>
+                  <WhatsAppLink href={order.whatsappUrl} name={order.customerName} />
+                </div>
                 <p className="type-caption">{order.city}</p>
                 <p className="type-price mt-3">{formatDh(order.totalAmount)}</p>
                 <p className="type-caption mt-2">{formatWhen(order.createdAt)}</p>
+                <button
+                  type="button"
+                  onClick={() => setSlip(order)}
+                  className="type-caption mt-3 border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright"
+                >
+                  Print shipping slip
+                </button>
                 <div className="mt-3">
                   <StatusField
                     orderId={order.id}
@@ -205,12 +228,13 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
               <th className="px-4 py-3 font-medium">Total Price</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium">Slip</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="type-body px-4 py-10">
+                <td colSpan={8} className="type-body px-4 py-10">
                   No orders match this desk view.
                 </td>
               </tr>
@@ -221,7 +245,12 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
                   <tr key={order.id} className="border-t border-gold/15 align-top">
                     <td className="type-caption max-w-40 px-4 py-4 break-all text-foreground">{order.id}</td>
                     <td className="px-4 py-4 text-sm text-foreground">{order.customerName}</td>
-                    <td className="type-caption px-4 py-4 text-foreground/85">{order.phone}</td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="type-caption text-foreground/85">{order.phone}</span>
+                        <WhatsAppLink href={order.whatsappUrl} name={order.customerName} />
+                      </div>
+                    </td>
                     <td className="px-4 py-4 text-sm text-foreground/85">{order.city}</td>
                     <td className="type-price px-4 py-4">{formatDh(order.totalAmount)}</td>
                     <td className="px-4 py-4">
@@ -233,6 +262,15 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
                       />
                     </td>
                     <td className="type-caption px-4 py-4 text-foreground/80">{formatWhen(order.createdAt)}</td>
+                    <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setSlip(order)}
+                        className="type-caption border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright"
+                      >
+                        Print slip
+                      </button>
+                    </td>
                   </tr>
                 );
               })
@@ -240,7 +278,22 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
           </tbody>
         </table>
       </div>
+      {slip ? <ShippingSlip order={slip} onClose={() => setSlip(null)} /> : null}
     </div>
+  );
+}
+
+function WhatsAppLink({ href, name }: { href: string; name: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Contact ${name} via WhatsApp`}
+      className="type-caption border border-[#E5C158] bg-[#0a0a0a] px-2.5 py-1.5 text-[#E5C158] hover:bg-gold/10"
+    >
+      WhatsApp
+    </a>
   );
 }
 

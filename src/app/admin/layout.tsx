@@ -23,6 +23,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/products" className="type-nav text-foreground/80 hover:text-gold-bright">
               Products
             </Link>
+            <Link href="/admin/coupons" className="type-nav text-foreground/80 hover:text-gold-bright">
+              Coupons
+            </Link>
           </nav>
         </aside>
         <div className="min-w-0 flex-1">
@@ -35,6 +38,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link href="/admin/products" className="type-nav text-foreground/80">
               Products
+            </Link>
+            <Link href="/admin/coupons" className="type-nav text-foreground/80">
+              Coupons
             </Link>
           </nav>
           {children}

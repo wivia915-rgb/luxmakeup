@@ -49,7 +49,12 @@ export async function getOrderDesk(): Promise<OrderDeskData> {
         status: order.status as OrderStatusValue,
         createdAt: order.createdAt.toISOString(),
         items: order.items,
-        whatsappUrl: customerWhatsAppUrl(order.phone, order.customerName, order.id),
+        whatsappUrl: customerWhatsAppUrl(
+          order.phone,
+          order.customerName,
+          order.id,
+          order.items.map((item) => item.title).filter(Boolean).join("، "),
+        ),
       })),
     };
   } catch (error) {
