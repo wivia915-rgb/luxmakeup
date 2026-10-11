@@ -2,9 +2,15 @@ import { orderStatusLabel, type DeskOrder, type OrderStatusValue } from "@/lib/o
 
 const columns = ["Name", "Phone", "City", "Address", "Total Price", "Status", "Date"] as const;
 
-export function ordersToCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) => OrderStatusValue) {
+type CsvLabels = {
+  columns: string[];
+  status: Record<OrderStatusValue, string>;
+};
+
+export function ordersToCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) => OrderStatusValue, labels?: CsvLabels) {
+  const header = labels?.columns ?? [...columns];
   const lines = [
-    columns.join(","),
+    header.join(","),
     ...orders.map((order) =>
       [
         order.customerName,
@@ -12,7 +18,7 @@ export function ordersToCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) =>
         order.city,
         order.address,
         String(order.totalAmount),
-        orderStatusLabel[statusOf(order)],
+        (labels?.status ?? orderStatusLabel)[statusOf(order)],
         courierDate(order.createdAt),
       ]
         .map(csvCell)
@@ -22,9 +28,9 @@ export function ordersToCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) =>
   return `\uFEFF${lines.join("\r\n")}`;
 }
 
-export function downloadOrdersCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) => OrderStatusValue) {
+export function downloadOrdersCsv(orders: DeskOrder[], statusOf: (order: DeskOrder) => OrderStatusValue, labels?: CsvLabels) {
   const stamp = new Date().toISOString().slice(0, 10);
-  const blob = new Blob([ordersToCsv(orders, statusOf)], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob([ordersToCsv(orders, statusOf, labels)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

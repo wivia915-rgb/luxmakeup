@@ -20,7 +20,7 @@ export async function createProduct(input: ProductDraft) {
         price: parsed.value.price,
         stock: parsed.value.stock,
         available: parsed.value.stock > 0,
-        images: parsed.value.imageUrl ? [parsed.value.imageUrl] : [],
+        images: parsed.value.imageUrls,
         categoryId,
         variants: { create: variantRows(parsed.value.variants) },
       },
@@ -56,7 +56,7 @@ export async function updateProduct(id: string, input: ProductDraft) {
         price: parsed.value.price,
         stock: parsed.value.stock,
         available,
-        images: parsed.value.imageUrl ? [parsed.value.imageUrl] : [],
+        images: parsed.value.imageUrls,
         categoryId,
         variants: {
           deleteMany: {},

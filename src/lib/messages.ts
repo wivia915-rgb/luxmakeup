@@ -10,7 +10,48 @@ export type Dictionary = {
   openMenu: string;
   closeMenu: string;
   skip: string;
-  hero: { eyebrow: string; line1: string; line2: string; line3: string; cta: string };
+  hero: { eyebrow: string; line1: string; line2: string; line3: string; cta: string; turn: string };
+  product: {
+    collection: string;
+    shade: string;
+    quantity: string;
+    decrease: string;
+    increase: string;
+    order: string;
+    orderNote: string;
+    formula: string;
+    ingredients: string;
+  };
+  checkout: {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    close: string;
+    closeLabel: string;
+    placed: string;
+    fullName: string;
+    phone: string;
+    city: string;
+    address: string;
+    namePlaceholder: string;
+    cityPlaceholder: string;
+    addressPlaceholder: string;
+    noCity: string;
+    free: string;
+    freeFes: string;
+    chooseCity: string;
+    pieces: string;
+    delivery: string;
+    toPay: string;
+    sending: string;
+    submit: string;
+    submitIdle: string;
+    nameError: string;
+    phoneError: string;
+    cityError: string;
+    addressError: string;
+    server: Record<string, string>;
+  };
   catalog: {
     eyebrow: string;
     title: string;
@@ -68,6 +109,57 @@ export const messages: Record<Locale, Dictionary> = {
       line2: "Elegance",
       line3: "with Lux Makeup",
       cta: "Explore Collection",
+      turn: "Turn the bottle",
+    },
+    product: {
+      collection: "Collection",
+      shade: "Shade",
+      quantity: "Quantity",
+      decrease: "Decrease quantity",
+      increase: "Increase quantity",
+      order: "Instant Order (COD)",
+      orderNote: "Cash on delivery. An advisor confirms the piece before it leaves the atelier.",
+      formula: "Formula",
+      ingredients: "Key Ingredients & Benefits",
+    },
+    checkout: {
+      eyebrow: "Cash on delivery",
+      title: "Instant Order (COD)",
+      lead: "No account. One step, pay the courier.",
+      close: "Close",
+      closeLabel: "Close cash on delivery",
+      placed: "Order placed for {name}. Pay {total} in cash when it arrives in {city}.",
+      fullName: "Full name",
+      phone: "Phone number",
+      city: "Moroccan city",
+      address: "Shipping address",
+      namePlaceholder: "Amina El Fassi",
+      cityPlaceholder: "Fès, Casablanca, Rabat…",
+      addressPlaceholder: "12 Rue Talaa Kebira, Médina",
+      noCity: "No matching city",
+      free: "Free",
+      freeFes: "Free in Fès",
+      chooseCity: "Choose a city",
+      pieces: "Pieces",
+      delivery: "Delivery",
+      toPay: "To pay",
+      sending: "Sending order",
+      submit: "Order · {total} COD",
+      submitIdle: "Order · pay on delivery",
+      nameError: "Enter your full name.",
+      phoneError: "Use a Moroccan mobile number, like 06 12 34 56 78.",
+      cityError: "Choose a city from the list.",
+      addressError: "Add a street and neighbourhood.",
+      server: {
+        "The shop WhatsApp number is not configured yet.": "The shop WhatsApp number is not configured yet.",
+        "This piece is no longer available.": "This piece is no longer available.",
+        "Choose a shade before ordering.": "Choose a shade before ordering.",
+        "Choose a quantity between 1 and 8.": "Choose a quantity between 1 and 8.",
+        "Check the delivery details.": "Check the delivery details.",
+        "Choose a city from the list.": "Choose a city from the list.",
+        "This piece is out of stock.": "This piece is out of stock.",
+        "The order could not be saved. Try again in a moment.": "The order could not be saved. Try again in a moment.",
+      },
     },
     catalog: {
       eyebrow: "The collection",
@@ -121,6 +213,57 @@ export const messages: Record<Locale, Dictionary> = {
       line2: "l'élégance",
       line3: "avec Lux Makeup",
       cta: "Explorer la collection",
+      turn: "Tourner le flacon",
+    },
+    product: {
+      collection: "Collection",
+      shade: "Teinte",
+      quantity: "Quantité",
+      decrease: "Diminuer la quantité",
+      increase: "Augmenter la quantité",
+      order: "Commander (paiement à la livraison)",
+      orderNote: "Paiement à la livraison. Un conseiller confirme la pièce avant qu'elle ne quitte l'atelier.",
+      formula: "Formule",
+      ingredients: "Ingrédients et bienfaits",
+    },
+    checkout: {
+      eyebrow: "Paiement à la livraison",
+      title: "Commande immédiate",
+      lead: "Sans compte. Une étape, vous payez le livreur.",
+      close: "Fermer",
+      closeLabel: "Fermer la commande",
+      placed: "Commande passée pour {name}. Payez {total} en espèces à l'arrivée à {city}.",
+      fullName: "Nom complet",
+      phone: "Téléphone",
+      city: "Ville marocaine",
+      address: "Adresse de livraison",
+      namePlaceholder: "Amina El Fassi",
+      cityPlaceholder: "Fès, Casablanca, Rabat…",
+      addressPlaceholder: "12 Rue Talaa Kebira, Médina",
+      noCity: "Aucune ville correspondante",
+      free: "Offerte",
+      freeFes: "Offerte à Fès",
+      chooseCity: "Choisissez une ville",
+      pieces: "Pièces",
+      delivery: "Livraison",
+      toPay: "À payer",
+      sending: "Envoi de la commande",
+      submit: "Commander · {total}",
+      submitIdle: "Commander · paiement à la livraison",
+      nameError: "Indiquez votre nom complet.",
+      phoneError: "Utilisez un mobile marocain, comme 06 12 34 56 78.",
+      cityError: "Choisissez une ville dans la liste.",
+      addressError: "Ajoutez une rue et un quartier.",
+      server: {
+        "The shop WhatsApp number is not configured yet.": "Le numéro WhatsApp de la maison n'est pas encore configuré.",
+        "This piece is no longer available.": "Cette pièce n'est plus disponible.",
+        "Choose a shade before ordering.": "Choisissez une teinte avant de commander.",
+        "Choose a quantity between 1 and 8.": "Choisissez une quantité entre 1 et 8.",
+        "Check the delivery details.": "Vérifiez les détails de livraison.",
+        "Choose a city from the list.": "Choisissez une ville dans la liste.",
+        "This piece is out of stock.": "Cette pièce est en rupture.",
+        "The order could not be saved. Try again in a moment.": "La commande n'a pas pu être enregistrée. Réessayez dans un instant.",
+      },
     },
     catalog: {
       eyebrow: "La collection",
@@ -200,6 +343,57 @@ export const messages: Record<Locale, Dictionary> = {
       line2: "الأناقة",
       line3: "مع لوكس ميكاب",
       cta: "استكشف المجموعة",
+      turn: "أدر القنينة",
+    },
+    product: {
+      collection: "المجموعة",
+      shade: "الدرجة",
+      quantity: "الكمية",
+      decrease: "إنقاص الكمية",
+      increase: "زيادة الكمية",
+      order: "اطلب الآن (الدفع عند الاستلام)",
+      orderNote: "الدفع عند الاستلام. يؤكد المستشار القطعة قبل أن تغادر الدار.",
+      formula: "التركيبة",
+      ingredients: "المكوّنات والفوائد",
+    },
+    checkout: {
+      eyebrow: "الدفع عند الاستلام",
+      title: "طلب فوري",
+      lead: "بلا حساب. خطوة واحدة، والدفع للمندوب.",
+      close: "إغلاق",
+      closeLabel: "إغلاق الطلب",
+      placed: "تم تسجيل طلب {name}. ادفعوا {total} نقدًا عند الوصول إلى {city}.",
+      fullName: "الاسم الكامل",
+      phone: "رقم الهاتف",
+      city: "مدينة مغربية",
+      address: "عنوان التوصيل",
+      namePlaceholder: "أمينة الفاسي",
+      cityPlaceholder: "فاس، الدار البيضاء، الرباط…",
+      addressPlaceholder: "12 زنقة الطالعة الكبيرة، المدينة",
+      noCity: "لا مدينة مطابقة",
+      free: "مجاني",
+      freeFes: "مجاني في فاس",
+      chooseCity: "اختاروا مدينة",
+      pieces: "القطع",
+      delivery: "التوصيل",
+      toPay: "للدفع",
+      sending: "جارٍ إرسال الطلب",
+      submit: "اطلب · {total}",
+      submitIdle: "اطلب · الدفع عند الاستلام",
+      nameError: "أدخلوا الاسم الكامل.",
+      phoneError: "استعملوا رقمًا مغربيًا، مثل 06 12 34 56 78.",
+      cityError: "اختاروا مدينة من القائمة.",
+      addressError: "أضيفوا الزنقة والحي.",
+      server: {
+        "The shop WhatsApp number is not configured yet.": "رقم واتساب الدار غير مُعد بعد.",
+        "This piece is no longer available.": "هذه القطعة لم تعد متاحة.",
+        "Choose a shade before ordering.": "اختاروا درجة قبل الطلب.",
+        "Choose a quantity between 1 and 8.": "اختاروا كمية بين 1 و 8.",
+        "Check the delivery details.": "راجعوا تفاصيل التوصيل.",
+        "Choose a city from the list.": "اختاروا مدينة من القائمة.",
+        "This piece is out of stock.": "نفد مخزون هذه القطعة.",
+        "The order could not be saved. Try again in a moment.": "تعذّر حفظ الطلب. أعيدوا المحاولة بعد لحظة.",
+      },
     },
     catalog: {
       eyebrow: "المجموعة",

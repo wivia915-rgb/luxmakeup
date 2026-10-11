@@ -3,6 +3,7 @@
 import { placeCodOrder } from "@/app/actions/place-cod-order";
 import { defaultShippingRates, deliveryFee, filterCities, resolveCity, validateCod, type CodFields, type ShippingRates } from "@/lib/cod";
 import { trackCommerce } from "@/lib/meta";
+import type { Dictionary } from "@/lib/messages";
 import { formatDh } from "@/lib/products";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -27,11 +28,12 @@ export type CodDrawerProps = {
   line: CodLine;
   onClose: () => void;
   shippingRates?: ShippingRates;
+  copy: Dictionary["checkout"];
 };
 
 const emptyFields: CodFields = { name: "", phone: "", city: "", address: "" };
 
-export function CodDrawer({ open, line, onClose, shippingRates = defaultShippingRates }: CodDrawerProps) {
+export function CodDrawer({ open, line, onClose, shippingRates = defaultShippingRates, copy }: CodDrawerProps) {
   const titleId = useId();
   const listId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -124,8 +126,21 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
     setCityOpen(false);
   }
 
+  const fieldError: Record<keyof CodFields, string> = {
+    name: copy.nameError,
+    phone: copy.phoneError,
+    city: copy.cityError,
+    address: copy.addressError,
+  };
+
   function visibleError(key: keyof CodFields) {
-    return touched[key] ? check.errors[key] : undefined;
+    return touched[key] && check.errors[key] ? fieldError[key] : undefined;
+  }
+
+  function feeLabel(amount: number | null, cityName: string | null) {
+    if (amount === null || !cityName) return copy.chooseCity;
+    if (amount === 0) return freeByThreshold || cityName !== "Fès" ? copy.free : copy.freeFes;
+    return formatDh(amount);
   }
 
   return (
@@ -152,17 +167,17 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
           >
             <div className="flex items-start justify-between gap-4 border-b border-gold/20 px-5 py-4">
               <div>
-                <p className="type-eyebrow">Cash on delivery</p>
+                <p className="type-eyebrow">{copy.eyebrow}</p>
                 <h2 id={titleId} className="type-title mt-2 text-[1.7rem]">
-                  Instant Order (COD)
+                  {copy.title}
                 </h2>
-                <p className="type-caption mt-2">No account. One step, pay the courier.</p>
+                <p className="type-caption mt-2">{copy.lead}</p>
               </div>
               <button
                 type="button"
                 className="inline-flex size-10 shrink-0 items-center justify-center border border-gold/30 text-foreground hover:border-gold-bright hover:text-gold-bright"
                 onClick={onClose}
-                aria-label="Close cash on delivery"
+                aria-label={copy.closeLabel}
               >
                 <X strokeWidth={1.25} size={18} />
               </button>
@@ -171,8 +186,10 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
             {placed ? (
               <div className="px-5 py-8">
                 <p className="type-body">
-                  Order placed for {line.name}. Pay {formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, shippingRates) ?? 0))} in cash when it arrives in{" "}
-                  {resolveCity(placed.city)}.
+                  {copy.placed
+                    .replace("{name}", line.name)
+                    .replace("{total}", formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, shippingRates) ?? 0)))
+                    .replace("{city}", resolveCity(placed.city) ?? placed.city)}
                 </p>
                 <p className="type-caption mt-4">
                   {placed.name} · {placed.phone}
@@ -180,7 +197,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                   {placed.address}, {resolveCity(placed.city)}
                 </p>
                 <button type="button" className="type-nav mt-8 border border-gold/40 px-5 py-3 text-gold-bright" onClick={onClose}>
-                  Close
+                  {copy.close}
                 </button>
               </div>
             ) : (
@@ -232,7 +249,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                   <p className="type-price mt-2">{formatDh(line.merchandise)}</p>
 
                   <label className="mt-6 block">
-                    <span className="type-eyebrow">Full name</span>
+                    <span className="type-eyebrow">{copy.fullName}</span>
                     <input
                       ref={nameRef}
                       name="name"
@@ -241,13 +258,13 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                       onChange={(event) => update("name", event.target.value)}
                       onBlur={() => setTouched((current) => ({ ...current, name: true }))}
                       className={`${fieldClass} ${visibleError("name") ? "border-[#E7B4A8]" : "border-gold/30"}`}
-                      placeholder="Amina El Fassi"
+                      placeholder={copy.namePlaceholder}
                     />
                     <FieldError message={visibleError("name")} />
                   </label>
 
                   <label className="mt-5 block">
-                    <span className="type-eyebrow">Phone number</span>
+                    <span className="type-eyebrow">{copy.phone}</span>
                     <input
                       name="phone"
                       type="tel"
@@ -264,7 +281,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
 
                   <div className="relative mt-5">
                     <label className="block" htmlFor={`${listId}-input`}>
-                      <span className="type-eyebrow">Moroccan city</span>
+                      <span className="type-eyebrow">{copy.city}</span>
                     </label>
                     <input
                       id={`${listId}-input`}
@@ -303,25 +320,25 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                         }
                       }}
                       className={`${fieldClass} ${visibleError("city") ? "border-[#E7B4A8]" : "border-gold/30"}`}
-                      placeholder="Fès, Casablanca, Rabat…"
+                      placeholder={copy.cityPlaceholder}
                     />
                     <FieldError message={visibleError("city")} />
                     {cityOpen ? (
                       <ul id={listId} role="listbox" className="absolute z-10 mt-1 max-h-52 w-full overflow-auto border border-gold/30 bg-[#0D0D0D]">
                         {suggestions.length === 0 ? (
-                          <li className="type-caption px-3 py-3">No matching city</li>
+                          <li className="type-caption px-3 py-3">{copy.noCity}</li>
                         ) : (
                           suggestions.map((city, index) => (
                             <li key={city} id={`${listId}-${index}`} role="option" aria-selected={index === activeIndex}>
                               <button
                                 type="button"
-                                className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm ${index === activeIndex ? "bg-[#1A1A1A] text-gold-bright" : "text-foreground"}`}
+                                className={`flex w-full items-center justify-between px-3 py-2.5 text-start text-sm ${index === activeIndex ? "bg-[#1A1A1A] text-gold-bright" : "text-foreground"}`}
                                 onMouseDown={(event) => event.preventDefault()}
                                 onClick={() => chooseCity(city)}
                               >
                                 <span>{city}</span>
                                 <span className="type-caption">
-                                  {deliveryFee(city, line.merchandise, shippingRates) === 0 ? "Free" : formatDh(deliveryFee(city, line.merchandise, shippingRates) ?? 0)}
+                                  {deliveryFee(city, line.merchandise, shippingRates) === 0 ? copy.free : formatDh(deliveryFee(city, line.merchandise, shippingRates) ?? 0)}
                                 </span>
                               </button>
                             </li>
@@ -332,7 +349,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                   </div>
 
                   <label className="mt-5 block">
-                    <span className="type-eyebrow">Shipping address</span>
+                    <span className="type-eyebrow">{copy.address}</span>
                     <textarea
                       name="address"
                       autoComplete="street-address"
@@ -341,24 +358,22 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                       onChange={(event) => update("address", event.target.value)}
                       onBlur={() => setTouched((current) => ({ ...current, address: true }))}
                       className={`${fieldClass} resize-none ${visibleError("address") ? "border-[#E7B4A8]" : "border-gold/30"}`}
-                      placeholder="12 Rue Talaa Kebira, Médina"
+                      placeholder={copy.addressPlaceholder}
                     />
                     <FieldError message={visibleError("address")} />
                   </label>
 
                   <dl className="mt-6 space-y-2 border-t border-gold/20 pt-4">
                     <div className="flex items-center justify-between gap-4">
-                      <dt className="type-caption">Pieces</dt>
+                      <dt className="type-caption">{copy.pieces}</dt>
                       <dd className="type-caption text-foreground">{formatDh(line.merchandise)}</dd>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <dt className="type-caption">Delivery</dt>
-                      <dd className="type-caption text-gold-bright">
-                        {fee === null ? "Choose a city" : fee === 0 ? (freeByThreshold || resolvedCity !== "Fès" ? "Free" : "Free in Fès") : formatDh(fee)}
-                      </dd>
+                      <dt className="type-caption">{copy.delivery}</dt>
+                      <dd className="type-caption text-gold-bright">{feeLabel(fee, resolvedCity)}</dd>
                     </div>
                     <div className="flex items-center justify-between gap-4 pt-2">
-                      <dt className="type-nav text-foreground">To pay</dt>
+                      <dt className="type-nav text-foreground">{copy.toPay}</dt>
                       <dd className="type-price">{payable === null ? "—" : formatDh(payable)}</dd>
                     </div>
                   </dl>
@@ -367,7 +382,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                 <div className="border-t border-gold/20 px-5 py-4">
                   {submitError ? (
                     <p className="mb-3 text-xs tracking-wide text-[#E7B4A8]" role="alert">
-                      {submitError}
+                      {copy.server[submitError] ?? submitError}
                     </p>
                   ) : null}
                   <button
@@ -375,7 +390,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                     disabled={!check.valid || submitting}
                     className="type-nav w-full bg-[#D4AF37] px-6 py-4 text-[#0D0D0D] transition-opacity enabled:hover:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {submitting ? "Sending order" : check.valid && payable !== null ? `Order · ${formatDh(payable)} COD` : "Order · pay on delivery"}
+                    {submitting ? copy.sending : check.valid && payable !== null ? copy.submit.replace("{total}", formatDh(payable)) : copy.submitIdle}
                   </button>
                 </div>
               </form>

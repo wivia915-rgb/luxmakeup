@@ -1,4 +1,3 @@
-import { HeroStage } from "@/components/hero-stage";
 import { getLocale } from "@/lib/get-locale";
 import { messages } from "@/lib/messages";
 import { ArrowUpRight } from "lucide-react";
@@ -23,12 +22,16 @@ export async function Hero() {
   const hero = messages[locale].hero;
 
   return (
-    <section className="relative isolate min-h-[100svh] overflow-hidden">
-      <HeroStage />
-
+    <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#0a0a0a]">
+      <img
+        src="/hero/atelier-lipstick.jpg"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover object-[58%_32%] lg:object-[72%_center]"
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/50" />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,#0D0D0D_0%,rgba(13,13,13,0.88)_34%,rgba(13,13,13,0.15)_68%,transparent_100%)] lg:bg-[linear-gradient(90deg,#0D0D0D_0%,rgba(13,13,13,0.92)_28%,rgba(13,13,13,0.35)_52%,transparent_72%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#0a0a0a_0%,rgba(10,10,10,0.78)_38%,rgba(10,10,10,0.28)_100%)] lg:bg-[linear-gradient(90deg,#0a0a0a_0%,rgba(10,10,10,0.88)_30%,rgba(10,10,10,0.42)_58%,rgba(10,10,10,0.18)_100%)]"
       />
 
       <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">

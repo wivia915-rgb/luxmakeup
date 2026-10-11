@@ -132,7 +132,7 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
         </div>
       ) : null}
 
-      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} shippingRates={shippingRates} /> : null}
+      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} shippingRates={shippingRates} copy={copy.checkout} /> : null}
     </>
   );
 }

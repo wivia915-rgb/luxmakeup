@@ -21,12 +21,14 @@ export type DeskVariant = {
 
 export type DeskProduct = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   price: number;
   stock: number;
   available: boolean;
   imageUrl: string;
+  imageUrls: string[];
   categoryName: string;
   categorySlug: DeskCategorySlug;
   variants: DeskVariant[];
@@ -47,7 +49,7 @@ export type ProductDraft = {
   description: string;
   price: string;
   category: string;
-  imageUrl: string;
+  imageUrls: string[];
   stock: string;
   variants: VariantDraft[];
 };
@@ -66,7 +68,7 @@ export type ProductWrite = {
   description: string;
   price: number;
   category: DeskCategorySlug;
-  imageUrl: string;
+  imageUrls: string[];
   stock: number;
   variants: VariantWrite[];
 };
@@ -110,13 +112,8 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
     return { ok: false, error: "Choose Makeup, Parfums, Skin Care, or Maison." };
   }
 
-  const imageUrl = input.imageUrl.trim();
-  if (imageUrl && !isHttpUrl(imageUrl)) {
-    return { ok: false, error: "Image URL must start with http:// or https://." };
-  }
-  if (imageUrl.length > 500) {
-    return { ok: false, error: "Image URL is too long." };
-  }
+  const images = parseImages(input.imageUrls);
+  if (!images.ok) return images;
 
   if (!/^\d+$/.test(input.stock.trim())) {
     return { ok: false, error: "Stock is a whole number." };
@@ -133,7 +130,7 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
 
   return {
     ok: true,
-    value: { title, description, price, category: category.slug, imageUrl, stock: countedStock, variants: variants.value },
+    value: { title, description, price, category: category.slug, imageUrls: images.value, stock: countedStock, variants: variants.value },
   };
 }
 
@@ -217,6 +214,7 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
       orderBy: { title: "asc" },
       select: {
         id: true,
+        slug: true,
         title: true,
         description: true,
         price: true,
@@ -243,12 +241,14 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
       connected: true,
       products: products.map((product) => ({
         id: product.id,
+        slug: product.slug,
         title: product.title,
         description: product.description ?? "",
         price: product.price,
         stock: product.stock,
         available: product.available,
         imageUrl: product.images[0] ?? "",
+        imageUrls: product.images,
         categoryName: deskCategoryLabel(product.category.slug, product.category.name),
         categorySlug: deskCategoryValue(product.category.slug),
         variants: product.variants.map((variant) => ({
@@ -266,6 +266,35 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
     console.error("Product desk could not be loaded", error instanceof Error ? error.name : "unknown");
     return emptyDesk;
   }
+}
+
+const maxImages = 8;
+
+function parseImages(input: string[] | undefined): { ok: true; value: string[] } | { ok: false; error: string } {
+  if (input === undefined) return { ok: true, value: [] };
+  if (!Array.isArray(input)) return { ok: false, error: "Images could not be read." };
+
+  const value: string[] = [];
+  for (const item of input) {
+    const url = String(item ?? "").trim();
+    if (!url) continue;
+    if (!isStoredImage(url)) {
+      return { ok: false, error: "Image URL must start with http:// or https://." };
+    }
+    if (url.length > 500) {
+      return { ok: false, error: "Image URL is too long." };
+    }
+    if (!value.includes(url)) value.push(url);
+  }
+
+  if (value.length > maxImages) {
+    return { ok: false, error: "A piece can hold up to 8 images." };
+  }
+  return { ok: true, value };
+}
+
+function isStoredImage(value: string) {
+  return isHttpUrl(value) || /^\/media\/[a-z0-9]{20,32}$/i.test(value);
 }
 
 function isHttpUrl(value: string) {

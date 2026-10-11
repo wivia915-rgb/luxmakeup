@@ -1,12 +1,13 @@
 "use client";
 
 import { updateOrderStatus } from "@/app/actions/update-order-status";
+import { useAdminCopy, useDeskError } from "@/components/admin/admin-locale";
 import { ShippingSlip } from "@/components/admin/shipping-slip";
+import { fillCount } from "@/lib/admin-copy";
 import { downloadOrdersCsv } from "@/lib/order-export";
 import { formatDh } from "@/lib/products";
 import {
   isOrderStatus,
-  orderStatusLabel,
   type DeskOrder,
   type OrderMetrics,
   type OrderStatusValue,
@@ -16,14 +17,9 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 const quickStatuses: OrderStatusValue[] = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-const statusFilters = [
-  { id: "ALL", label: "All" },
-  { id: "PENDING", label: "Pending" },
-  { id: "SHIPPED", label: "Shipped" },
-  { id: "CANCELLED", label: "Cancelled" },
-] as const;
+const statusFilterIds = ["ALL", "PENDING", "SHIPPED", "CANCELLED"] as const;
 
-type StatusFilter = (typeof statusFilters)[number]["id"];
+type StatusFilter = (typeof statusFilterIds)[number];
 
 const badgeClass: Record<OrderStatusValue, string> = {
   PENDING: "border border-[#E5C158] text-[#E5C158]",
@@ -41,6 +37,9 @@ type OrdersBoardProps = {
 
 export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
   const router = useRouter();
+  const text = useAdminCopy();
+  const explain = useDeskError();
+  const ordersCopy = text.orders;
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [overrides, setOverrides] = useState<Partial<Record<string, OrderStatusValue>>>({});
@@ -108,7 +107,7 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
           else copy[orderId] = previous;
           return copy;
         });
-        setNotice(result.error);
+        setNotice(explain(result.error));
         return;
       }
       router.refresh();
@@ -119,51 +118,56 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
     <div className="px-5 py-8 md:px-8 md:py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="type-eyebrow">Orders</p>
-          <h1 className="type-headline mt-3">The desk</h1>
+          <p className="type-eyebrow">{ordersCopy.eyebrow}</p>
+          <h1 className="type-headline mt-3">{ordersCopy.title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             disabled={visible.length === 0}
-            onClick={() => downloadOrdersCsv(visible, (order) => overrides[order.id] ?? order.status)}
+            onClick={() =>
+              downloadOrdersCsv(visible, (order) => overrides[order.id] ?? order.status, {
+                columns: [ordersCopy.customer, ordersCopy.phone, ordersCopy.city, text.slip.address, ordersCopy.total, ordersCopy.status, ordersCopy.date],
+                status: text.status,
+              })
+            }
             className="type-nav border border-gold-bright px-4 py-3 text-gold-bright transition-colors hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Export orders (CSV)
+            {ordersCopy.export}
           </button>
           <p className="type-caption inline-flex items-center gap-2">
             <span className="size-1.5 animate-pulse bg-[#E5C158]" aria-hidden />
-            Live · refreshes every few seconds
+            {ordersCopy.live}
           </p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3" aria-live="polite">
-        <Metric label="Total sales" value={formatDh(metrics.totalSales)} />
-        <Metric label="Pending orders" value={String(metrics.pending)} />
-        <Metric label="Delivered" value={String(metrics.delivered)} />
+        <Metric label={ordersCopy.sales} value={formatDh(metrics.totalSales)} />
+        <Metric label={ordersCopy.pending} value={String(metrics.pending)} />
+        <Metric label={ordersCopy.delivered} value={String(metrics.delivered)} />
       </div>
 
       {!connected ? (
         <p className="type-body mt-6 max-w-xl">
-          The order book is waiting for the database. Connect PostgreSQL, then new cash-on-delivery orders will appear here.
+          {ordersCopy.waiting}
         </p>
       ) : null}
 
       <div className="mt-8 flex flex-col gap-4 border-y border-gold/20 py-5">
         <label className="block max-w-md">
-          <span className="type-eyebrow">Search</span>
+          <span className="type-eyebrow">{ordersCopy.search}</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name, phone, city, piece"
+            placeholder={ordersCopy.searchPlaceholder}
             className="mt-2 w-full border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
           />
         </label>
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by status">
-          {statusFilters.map((item) => (
-            <FilterChip key={item.id} pressed={status === item.id} onClick={() => setStatus(item.id)}>
-              {item.label}
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label={ordersCopy.filter}>
+          {statusFilterIds.map((id) => (
+            <FilterChip key={id} pressed={status === id} onClick={() => setStatus(id)}>
+              {id === "ALL" ? ordersCopy.all : text.status[id]}
             </FilterChip>
           ))}
         </div>
@@ -176,12 +180,12 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
       ) : null}
 
       <p className="type-caption mt-6">
-        {visible.length === 1 ? "1 order" : `${visible.length} orders`}
+        {visible.length === 1 ? ordersCopy.one : fillCount(ordersCopy.many, visible.length)}
       </p>
 
       <div className="mt-4 space-y-3 md:hidden">
         {visible.length === 0 ? (
-          <p className="type-body border border-gold/20 px-4 py-10">No orders match this desk view.</p>
+          <p className="type-body border border-gold/20 px-4 py-10">{ordersCopy.empty}</p>
         ) : (
           visible.map((order) => {
             const current = overrides[order.id] ?? order.status;
@@ -195,13 +199,13 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
                 </div>
                 <p className="type-caption">{order.city}</p>
                 <p className="type-price mt-3">{formatDh(order.totalAmount)}</p>
-                <p className="type-caption mt-2">{formatWhen(order.createdAt)}</p>
+                <p className="type-caption mt-2">{formatWhen(order.createdAt, text.dateLocale)}</p>
                 <button
                   type="button"
                   onClick={() => setSlip(order)}
                   className="type-caption mt-3 border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright"
                 >
-                  Print shipping slip
+                  {ordersCopy.printSlip}
                 </button>
                 <div className="mt-3">
                   <StatusField
@@ -218,24 +222,24 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
       </div>
 
       <div className="mt-4 hidden overflow-x-auto border border-gold/20 md:block">
-        <table className="w-full min-w-[880px] border-collapse text-left">
+        <table className="w-full min-w-[880px] border-collapse text-start">
           <thead className="bg-card">
             <tr className="type-eyebrow text-[0.62rem]">
-              <th className="px-4 py-3 font-medium">Order ID</th>
-              <th className="px-4 py-3 font-medium">Customer Name</th>
-              <th className="px-4 py-3 font-medium">Phone</th>
-              <th className="px-4 py-3 font-medium">City</th>
-              <th className="px-4 py-3 font-medium">Total Price</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Slip</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.id}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.customer}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.phone}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.city}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.total}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.status}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.date}</th>
+              <th className="px-4 py-3 font-medium">{ordersCopy.slip}</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
                 <td colSpan={8} className="type-body px-4 py-10">
-                  No orders match this desk view.
+                  {ordersCopy.empty}
                 </td>
               </tr>
             ) : (
@@ -261,14 +265,14 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
                         onChange={(next) => changeStatus(order.id, next)}
                       />
                     </td>
-                    <td className="type-caption px-4 py-4 text-foreground/80">{formatWhen(order.createdAt)}</td>
+                    <td className="type-caption px-4 py-4 text-foreground/80">{formatWhen(order.createdAt, text.dateLocale)}</td>
                     <td className="px-4 py-4">
                       <button
                         type="button"
                         onClick={() => setSlip(order)}
                         className="type-caption border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright"
                       >
-                        Print slip
+                        {ordersCopy.print}
                       </button>
                     </td>
                   </tr>
@@ -289,7 +293,7 @@ function WhatsAppLink({ href, name }: { href: string; name: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Contact ${name} via WhatsApp`}
+      aria-label={useAdminCopy().orders.whatsapp.replace("{name}", name)}
       className="type-caption border border-[#E5C158] bg-[#0a0a0a] px-2.5 py-1.5 text-[#E5C158] hover:bg-gold/10"
     >
       WhatsApp
@@ -308,15 +312,16 @@ function StatusField({
   busy: boolean;
   onChange: (next: OrderStatusValue) => void;
 }) {
+  const labels = useAdminCopy();
   const options: OrderStatusValue[] = status === "CONFIRMED" ? ["CONFIRMED", ...quickStatuses] : quickStatuses;
 
   return (
     <div className="flex min-w-36 flex-col items-start gap-2">
-      <span className={`type-caption inline-flex px-2.5 py-1 ${badgeClass[status]}`}>{orderStatusLabel[status]}</span>
+      <span className={`type-caption inline-flex px-2.5 py-1 ${badgeClass[status]}`}>{labels.status[status]}</span>
       <select
         value={status}
         disabled={busy}
-        aria-label={`Set status for order ${orderId.slice(0, 8)}`}
+        aria-label={labels.orders.setStatus.replace("{id}", orderId.slice(0, 8))}
         onChange={(event) => {
           if (isOrderStatus(event.target.value)) onChange(event.target.value);
         }}
@@ -324,7 +329,7 @@ function StatusField({
       >
         {options.map((item) => (
           <option key={item} value={item}>
-            {orderStatusLabel[item]}
+            {labels.status[item]}
           </option>
         ))}
       </select>
@@ -363,8 +368,8 @@ function FilterChip({
   );
 }
 
-function formatWhen(iso: string) {
-  return new Intl.DateTimeFormat("fr-MA", {
+function formatWhen(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));

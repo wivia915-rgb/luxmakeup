@@ -239,10 +239,26 @@
   animation: lux-tip 1.15s ease-in-out infinite;
 }
 
+@keyframes lux-bottle {
+  0%,
+  100% {
+    transform: rotateY(-26deg) rotateX(7deg);
+  }
+  50% {
+    transform: rotateY(14deg) rotateX(3deg);
+  }
+}
+
+.lux-bottle {
+  transform-style: preserve-3d;
+  animation: lux-bottle 7.5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lux-rise,
   .lux-spark,
-  .lux-tip {
+  .lux-tip,
+  .lux-bottle {
     animation: none;
   }
 

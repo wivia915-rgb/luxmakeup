@@ -1,3 +1,7 @@
+"use client";
+
+import { useAdminCopy } from "@/components/admin/admin-locale";
+import { fillCount } from "@/lib/admin-copy";
 import type { AdminDeskData, DeskRank, DeskStatusSlice } from "@/lib/admin-desk";
 import { formatDh } from "@/lib/products";
 import Link from "next/link";
@@ -13,28 +17,27 @@ const statusColor: Record<DeskStatusSlice["status"], string> = {
 };
 
 export function DeskOverview({ desk }: { desk: AdminDeskData }) {
+  const copy = useAdminCopy().desk;
   return (
     <main id="main" className="bg-[#0a0a0a] px-5 py-8 md:px-8 md:py-10">
-      <p className="type-eyebrow">Atelier</p>
-      <h1 className="type-headline mt-3">The desk</h1>
-      <p className="type-body mt-4 max-w-xl">
-        Cash on delivery, counted in dirhams. Revenue leaves cancelled orders out of the book.
-      </p>
+      <p className="type-eyebrow">{copy.eyebrow}</p>
+      <h1 className="type-headline mt-3">{copy.title}</h1>
+      <p className="type-body mt-4 max-w-xl">{copy.lead}</p>
 
       <div className="mt-8 grid gap-3 lg:grid-cols-5" aria-live="polite">
         <article className="border border-gold/25 bg-[#0a0a0a] px-5 py-6 lg:col-span-2">
-          <p className="type-eyebrow">Total revenue</p>
+          <p className="type-eyebrow">{copy.revenue}</p>
           <p className={`mt-4 text-5xl tracking-[-0.04em] text-[#E5C158] ${figure}`}>{formatDh(desk.totalRevenue)}</p>
-          <p className="type-caption mt-4">MAD · whole dirhams still in the book</p>
+          <p className="type-caption mt-4">{copy.revenueNote}</p>
         </article>
 
         <article className="border border-gold/25 bg-[#0a0a0a] px-5 py-6 lg:col-span-3">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="type-eyebrow">Total orders</p>
+              <p className="type-eyebrow">{copy.orders}</p>
               <p className={`mt-4 text-5xl tracking-[-0.04em] text-[#E5C158] ${figure}`}>{desk.totalOrders}</p>
             </div>
-            <p className="type-caption pb-1 text-right">Share of the book</p>
+            <p className="type-caption pb-1 text-end">{copy.share}</p>
           </div>
           <StatusChart statuses={desk.statuses} total={desk.totalOrders} />
         </article>
@@ -42,41 +45,41 @@ export function DeskOverview({ desk }: { desk: AdminDeskData }) {
 
       {!desk.connected ? (
         <p className="type-body mt-6 max-w-xl">
-          The order book is waiting for the database. Connect PostgreSQL, then orders and pieces will appear here.
+          {copy.waiting}
         </p>
       ) : null}
 
       <div className="mt-3 grid gap-3 xl:grid-cols-2">
         <RankChart
-          eyebrow="Cities"
-          title="Top cities"
-          empty="Cities appear here once an order is in the book."
+          eyebrow={copy.citiesEyebrow}
+          title={copy.cities}
+          empty={copy.citiesEmpty}
           rows={desk.cities}
           scale="amount"
-          metric={(row) => `${row.count} ${row.count === 1 ? "order" : "orders"} · ${formatDh(row.amount)}`}
+          metric={(row) => `${row.count === 1 ? copy.oneOrder : fillCount(copy.manyOrders, row.count)} · ${formatDh(row.amount)}`}
         />
         <RankChart
-          eyebrow="Pieces"
-          title="Top pieces"
-          empty="Pieces appear here once an order is in the book."
+          eyebrow={copy.piecesEyebrow}
+          title={copy.pieces}
+          empty={copy.piecesEmpty}
           rows={desk.pieces}
           scale="count"
-          metric={(row) => `${row.count} ${row.count === 1 ? "piece" : "pieces"} · ${formatDh(row.amount)}`}
+          metric={(row) => `${row.count === 1 ? copy.onePiece : fillCount(copy.manyPieces, row.count)} · ${formatDh(row.amount)}`}
         />
       </div>
 
-      <nav className="mt-10 grid gap-3 sm:grid-cols-2" aria-label="Desk shortcuts">
+      <nav className="mt-10 grid gap-3 sm:grid-cols-2" aria-label={copy.shortcuts}>
         <Link href="/admin/orders" className="border border-gold/25 bg-[#0a0a0a] px-6 py-6 transition-colors hover:border-[#E5C158]">
-          <p className="type-eyebrow">Orders</p>
-          <p className={`mt-3 text-3xl tracking-[-0.03em] text-[#E5C158] ${figure}`}>Open the book</p>
-          <p className="type-body mt-3">Confirm, ship, and close each cash-on-delivery order.</p>
+          <p className="type-eyebrow">{copy.orders}</p>
+          <p className={`mt-3 text-3xl tracking-[-0.03em] text-[#E5C158] ${figure}`}>{copy.openBook}</p>
+          <p className="type-body mt-3">{copy.openBookBody}</p>
         </Link>
         <Link href="/admin/products" className="border border-gold/25 bg-[#0a0a0a] px-6 py-6 transition-colors hover:border-[#E5C158]">
-          <p className="type-eyebrow">Products</p>
+          <p className="type-eyebrow">{copy.piecesEyebrow}</p>
           <p className={`mt-3 text-3xl tracking-[-0.03em] text-[#E5C158] ${figure}`}>
-            {desk.productCount} {desk.productCount === 1 ? "piece" : "pieces"}
+            {desk.productCount === 1 ? copy.onePiece : fillCount(copy.manyPieces, desk.productCount)}
           </p>
-          <p className="type-body mt-3">The collection currently held in the catalog.</p>
+          <p className="type-body mt-3">{copy.collectionBody}</p>
         </Link>
       </nav>
     </main>
@@ -84,6 +87,7 @@ export function DeskOverview({ desk }: { desk: AdminDeskData }) {
 }
 
 function StatusChart({ statuses, total }: { statuses: DeskStatusSlice[]; total: number }) {
+  const copy = useAdminCopy();
   const active = statuses.filter((slice) => slice.count > 0);
   let cursor = 0;
   const stops = active.map((slice) => {
@@ -91,14 +95,14 @@ function StatusChart({ statuses, total }: { statuses: DeskStatusSlice[]; total: 
     cursor += slice.share * 100;
     return `${statusColor[slice.status]} ${start}% ${cursor}%`;
   });
-  const summary = statuses.map((slice) => `${slice.label} ${slice.count}`).join(", ");
+  const summary = statuses.map((slice) => `${copy.status[slice.status]} ${slice.count}`).join(", ");
 
   return (
     <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
       <div
         className="relative size-36 shrink-0 rounded-full"
         role="img"
-        aria-label={total === 0 ? "No orders yet" : summary}
+        aria-label={total === 0 ? copy.desk.noOrders : summary}
         style={
           stops.length > 0
             ? { background: `conic-gradient(${stops.join(", ")})` }
@@ -112,11 +116,11 @@ function StatusChart({ statuses, total }: { statuses: DeskStatusSlice[]; total: 
           <li key={slice.status} className="flex items-center justify-between gap-4">
             <span className="flex min-w-0 items-center gap-2">
               <span className="size-2 shrink-0" style={{ background: statusColor[slice.status] }} aria-hidden />
-              <span className="type-caption text-foreground">{slice.label}</span>
+              <span className="type-caption text-foreground">{copy.status[slice.status]}</span>
             </span>
             <span className="type-caption text-[#E5C158]">
               {slice.count}
-              <span className="ml-2 text-foreground/55">{Math.round(slice.share * 100)}%</span>
+              <span className="ms-2 text-foreground/55">{Math.round(slice.share * 100)}%</span>
             </span>
           </li>
         ))}

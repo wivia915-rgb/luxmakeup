@@ -150,3 +150,12 @@ model StoreSettings {
 
   @@map("store_settings")
 }
+
+model ProductMedia {
+  id        String   @id @default(cuid())
+  mime      String
+  bytes     Bytes
+  createdAt DateTime @default(now())
+
+  @@map("product_media")
+}

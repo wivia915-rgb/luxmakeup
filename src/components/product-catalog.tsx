@@ -1,16 +1,22 @@
 import { CatalogControls } from "@/components/catalog-controls";
-import { ProductStill } from "@/components/product-still";
+import { PiecePhoto } from "@/components/piece-photo";
 import { shippingRatesFrom } from "@/lib/cod";
 import { getLocale } from "@/lib/get-locale";
 import { getStoreSettings } from "@/lib/store-settings";
 import { messages } from "@/lib/messages";
 import { getProductPage } from "@/lib/product-story";
-import { formatDh, products } from "@/lib/products";
+import { formatDh, products, type Product } from "@/lib/products";
+import { getStorefrontPieces, type StorefrontPiece } from "@/lib/storefront-catalog";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 export async function ProductCatalog() {
-  const [copy, settings] = await Promise.all([getLocale().then((locale) => messages[locale]), getStoreSettings()]);
+  const [copy, settings, stored] = await Promise.all([
+    getLocale().then((locale) => messages[locale]),
+    getStoreSettings(),
+    getStorefrontPieces(),
+  ]);
+  const pieces = stored.length > 0 ? stored : products.map(memoryPiece);
 
   return (
     <section id="edit" className="scroll-mt-28 px-5 py-16 [content-visibility:auto] [contain-intrinsic-size:auto_2400px] md:px-10 md:py-20">
@@ -22,10 +28,10 @@ export async function ProductCatalog() {
         <p className="type-body max-w-sm">{copy.catalog.lead}</p>
       </div>
 
-      <CatalogControls total={products.length} copy={copy} shippingRates={shippingRatesFrom(settings)} />
+      <CatalogControls total={pieces.length} copy={copy} shippingRates={shippingRatesFrom(settings)} />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {products.map((product) => (
+        {pieces.map((product) => (
           <article
             key={product.id}
             data-piece=""
@@ -37,11 +43,11 @@ export async function ProductCatalog() {
             <Link
               href={`/product/${product.id}`}
               prefetch={false}
-              className="relative block aspect-[4/5] overflow-hidden"
+              className="relative block aspect-[4/5] overflow-hidden bg-[#0D0D0D]"
               aria-label={copy.catalog.view.replace("{name}", product.name)}
             >
-              <div className="absolute inset-0 origin-center transition-transform duration-700 ease-out group-hover:scale-110 group-focus-within:scale-110">
-                <ProductStill motif={product.motif} name={product.name} />
+              <div className="absolute inset-0 origin-center transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-within:scale-[1.04]">
+                <PiecePhoto src={product.image} name={product.name} motif={product.motif} />
               </div>
               <div className="pointer-events-none absolute top-4 left-4 flex flex-wrap gap-2">
                 {product.offer ? <GoldBadge solid>{copy.catalog.offer}</GoldBadge> : null}
@@ -60,13 +66,16 @@ export async function ProductCatalog() {
                 {product.moods.map((mood) => copy.mood[mood]).join(" · ")}
               </p>
               <p className="type-body mt-4 flex-1">{copy.descriptions[product.id] ?? product.description}</p>
-              <div className="mt-8 flex items-center justify-between gap-4">
-                <p className="type-price">{formatDh(product.price)}</p>
+              <div className="mt-8 flex items-end justify-between gap-4">
+                <div>
+                  <p className="type-price">{formatDh(product.price)}</p>
+                  {product.compareAt ? <p className="type-caption mt-1 line-through">{formatDh(product.compareAt)}</p> : null}
+                </div>
                 <button
                   type="button"
                   className="type-nav border border-gold/50 px-4 py-3 text-gold-bright transition-colors hover:border-gold-bright hover:bg-gold/10"
                   data-order={product.id}
-                  data-shade={getProductPage(product.id)?.shades[0]?.id ?? ""}
+                  data-shade={product.shadeId}
                   data-name={product.name}
                   data-badge={product.badge}
                   data-price={product.price}
@@ -80,6 +89,24 @@ export async function ProductCatalog() {
       </div>
     </section>
   );
+}
+
+function memoryPiece(product: Product): StorefrontPiece {
+  return {
+    id: product.id,
+    name: product.name,
+    category: product.category,
+    moods: product.moods,
+    price: product.price,
+    compareAt: null,
+    offer: product.offer,
+    badge: product.badge,
+    description: product.description,
+    image: "",
+    images: [],
+    motif: product.motif,
+    shadeId: getProductPage(product.id)?.shades[0]?.id ?? "atelier",
+  };
 }
 
 function GoldBadge({ solid = false, children }: { solid?: boolean; children: ReactNode }) {

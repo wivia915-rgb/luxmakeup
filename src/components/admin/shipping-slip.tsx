@@ -1,10 +1,12 @@
 "use client";
 
+import { useAdminCopy } from "@/components/admin/admin-locale";
 import { formatDh } from "@/lib/products";
 import type { DeskOrder } from "@/lib/order-desk";
 import { useEffect } from "react";
 
 export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: () => void }) {
+  const copy = useAdminCopy();
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -22,24 +24,24 @@ export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: ()
         aria-modal="true"
         aria-labelledby="shipping-slip-title"
       >
-        <p className="cod-gold type-eyebrow">Cash on delivery</p>
+        <p className="cod-gold type-eyebrow">{copy.slip.eyebrow}</p>
         <h2 id="shipping-slip-title" className="mt-3 font-serif text-3xl tracking-[0.12em] text-foreground uppercase">
           Lux Makeup
         </h2>
-        <p className="type-caption mt-2">Shipping slip</p>
+        <p className="type-caption mt-2">{copy.slip.title}</p>
 
         <dl className="mt-6 space-y-3 border-y border-gold/25 py-4 text-sm">
-          <SlipRow label="Order ID" value={order.id} />
-          <SlipRow label="Customer" value={order.customerName} />
-          <SlipRow label="Phone" value={order.phone} />
-          <SlipRow label="City" value={order.city} />
-          <SlipRow label="Address" value={order.address} />
-          <SlipRow label="Date" value={slipDate(order.createdAt)} />
+          <SlipRow label={copy.slip.id} value={order.id} />
+          <SlipRow label={copy.slip.customer} value={order.customerName} />
+          <SlipRow label={copy.slip.phone} value={order.phone} />
+          <SlipRow label={copy.slip.city} value={order.city} />
+          <SlipRow label={copy.slip.address} value={order.address} />
+          <SlipRow label={copy.slip.date} value={slipDate(order.createdAt, copy.dateLocale)} />
         </dl>
 
-        <p className="type-eyebrow mt-5">Items</p>
+        <p className="type-eyebrow mt-5">{copy.slip.items}</p>
         {order.items.length === 0 ? (
-          <p className="mt-3 text-sm text-foreground/70">No pieces recorded.</p>
+          <p className="mt-3 text-sm text-foreground/70">{copy.slip.empty}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {order.items.map((item, index) => (
@@ -55,16 +57,16 @@ export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: ()
         )}
 
         <p className="mt-6 flex items-end justify-between border-t border-gold/30 pt-4">
-          <span className="type-eyebrow">Total COD</span>
+          <span className="type-eyebrow">{copy.slip.total}</span>
           <span className="font-serif text-3xl text-[#E5C158]">{formatDh(order.totalAmount)}</span>
         </p>
 
         <div className="cod-slip-actions mt-6 flex flex-wrap gap-3">
           <button type="button" onClick={() => window.print()} className="type-nav border border-gold-bright px-4 py-3 text-gold-bright">
-            Print slip
+            {copy.slip.print}
           </button>
           <button type="button" onClick={onClose} className="type-nav px-4 py-3 text-foreground/70">
-            Close
+            {copy.slip.close}
           </button>
         </div>
       </article>
@@ -81,8 +83,8 @@ function SlipRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function slipDate(iso: string) {
-  return new Intl.DateTimeFormat("fr-MA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+function slipDate(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
 }
 
 const printStyles = `

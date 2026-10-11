@@ -1,11 +1,15 @@
 import { ProductDetail } from "@/components/product-detail";
-import { getProductPage } from "@/lib/product-story";
+import { getLocale } from "@/lib/get-locale";
+import { messages } from "@/lib/messages";
+import { getProductPage, type IngredientIcon, type ProductPageData } from "@/lib/product-story";
 import { shippingRatesFrom } from "@/lib/cod";
 import { getStoreSettings } from "@/lib/store-settings";
+import { getStorefrontPiece } from "@/lib/storefront-catalog";
 import { formatDh, products } from "@/lib/products";
 import { siteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { StorefrontPieceDetail } from "@/lib/storefront-catalog";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -17,7 +21,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductPage(slug);
+  const product = getProductPage(slug) ?? (await catalogPage(slug));
   if (!product) {
     return { title: "Piece unavailable" };
   }
@@ -51,7 +55,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductPage(slug);
+  const story = getProductPage(slug);
+  const catalog = story ? null : await getStorefrontPiece(slug);
+  const product = story ?? (catalog ? catalogPageFrom(catalog) : null);
   if (!product) notFound();
   const settings = await getStoreSettings();
 
@@ -74,7 +80,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main id="main">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <ProductDetail product={product} shippingRates={shippingRatesFrom(settings)} />
+      <ProductDetail product={product} shippingRates={shippingRatesFrom(settings)} image={catalog?.image ?? ""} images={catalog?.images ?? []} copy={messages[await getLocale()]} />
     </main>
   );
+}
+
+const ingredientIcons: IngredientIcon[] = ["droplet", "spark", "leaf", "sun", "gem", "flower"];
+
+async function catalogPage(slug: string): Promise<ProductPageData | null> {
+  const piece = await getStorefrontPiece(slug);
+  return piece ? catalogPageFrom(piece) : null;
+}
+
+function catalogPageFrom(piece: StorefrontPieceDetail): ProductPageData {
+  return {
+    id: piece.id,
+    name: piece.name,
+    category: piece.category,
+    moods: piece.moods,
+    price: piece.price,
+    offer: piece.offer,
+    badge: piece.badge,
+    description: piece.description,
+    motif: piece.motif,
+    shades: [{ id: "atelier", name: "Atelier", swatch: "#D4AF37" }],
+    ingredients: piece.ingredients.map((name, index) => ({
+      name,
+      benefit: piece.description,
+      icon: ingredientIcons[index % ingredientIcons.length],
+    })),
+  };
 }

@@ -4,7 +4,8 @@ import type { CodDrawerProps } from "@/components/cod-drawer";
 import { ProductStage } from "@/components/product-stage";
 import type { IngredientIcon, ProductPageData, Shade } from "@/lib/product-story";
 import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
-import { formatDh } from "@/lib/products";
+import type { Dictionary } from "@/lib/messages";
+import { formatDh, type Category, type Mood } from "@/lib/products";
 import { trackCommerce } from "@/lib/meta";
 import { Droplets, Flower2, Gem, Leaf, Minus, Plus, Sparkles, SunMedium } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +20,21 @@ const icons = {
   flower: Flower2,
 } as const;
 
-export function ProductDetail({ product, shippingRates = defaultShippingRates }: { product: ProductPageData; shippingRates?: ShippingRates }) {
+export function ProductDetail({
+  product,
+  shippingRates = defaultShippingRates,
+  image = "",
+  images = [],
+  copy,
+}: {
+  product: ProductPageData;
+  shippingRates?: ShippingRates;
+  image?: string;
+  images?: string[];
+  copy: Dictionary;
+}) {
+  const photos = images.length > 0 ? images : image ? [image] : [];
+  const [photo, setPhoto] = useState(0);
   const [shade, setShade] = useState<Shade>(product.shades[0]);
   const [quantity, setQuantity] = useState(1);
   const [ordering, setOrdering] = useState(false);
@@ -47,37 +62,60 @@ export function ProductDetail({ product, shippingRates = defaultShippingRates }:
       <article className="px-5 pt-8 pb-28 md:px-10 md:pt-12 md:pb-20">
         <p className="type-caption">
           <Link href="/#edit" className="text-gold-bright hover:text-foreground">
-            Collection
+            {copy.product.collection}
           </Link>
           <span aria-hidden> · </span>
-          {product.category}
+          {knownCategory(copy, product.category)}
         </p>
 
         <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
-          <ProductStage motif={product.motif} swatch={shade.swatch} name={product.name} />
+          {photos.length > 0 ? (
+            <div>
+              <div className="aspect-[4/5] overflow-hidden border border-gold/20 bg-[#0D0D0D]">
+                <img src={photos[Math.min(photo, photos.length - 1)]} alt="" className="size-full object-cover" />
+              </div>
+              {photos.length > 1 ? (
+                <div className="mt-3 flex gap-2">
+                  {photos.map((src, index) => (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={() => setPhoto(index)}
+                      aria-pressed={index === photo}
+                      className={`size-16 overflow-hidden border ${index === photo ? "border-[#E5C158]" : "border-gold/20"}`}
+                    >
+                      <img src={src} alt="" className="size-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <ProductStage motif={product.motif} swatch={shade.swatch} name={product.name} />
+          )}
 
           <div>
-            <p className="type-eyebrow">{product.badge}</p>
+            <p className="type-eyebrow">{copy.badges[product.badge] ?? product.badge}</p>
             <h1 className="type-headline mt-4">{product.name}</h1>
-            <p className="type-italic mt-3 text-2xl text-gold-bright">{product.moods.join(" · ")}</p>
+            <p className="type-italic mt-3 text-2xl text-gold-bright">{product.moods.map((mood) => knownMood(copy, mood)).join(" · ")}</p>
             <p className="type-lead mt-6 max-w-xl">{product.description}</p>
             <p className="type-price mt-6">{formatDh(product.price)}</p>
 
-            <ShadeSelector shades={product.shades} shade={shade} onChange={setShade} />
-            <QuantitySelector quantity={quantity} onChange={setQuantity} />
+            <ShadeSelector shades={product.shades} shade={shade} onChange={setShade} label={copy.product.shade} />
+            <QuantitySelector quantity={quantity} onChange={setQuantity} copy={copy.product} />
 
             <button
               type="button"
               className="type-nav mt-8 hidden bg-[#D4AF37] px-8 py-4 text-[#0D0D0D] transition-colors hover:bg-[#E5C158] md:inline-flex"
               onClick={openOrder}
             >
-              Instant Order (COD)
+              {copy.product.order}
             </button>
-            <p className="type-caption mt-4 hidden max-w-sm md:block">Cash on delivery. An advisor confirms the piece before it leaves the atelier.</p>
+            <p className="type-caption mt-4 hidden max-w-sm md:block">{copy.product.orderNote}</p>
           </div>
         </div>
 
-        <IngredientBreakdown ingredients={product.ingredients} />
+        <IngredientBreakdown ingredients={product.ingredients} copy={copy.product} />
       </article>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#D4AF37]/40 bg-[#0D0D0D]/92 px-4 py-3 backdrop-blur-xl md:hidden">
@@ -91,7 +129,7 @@ export function ProductDetail({ product, shippingRates = defaultShippingRates }:
             className="type-nav bg-[#D4AF37] px-4 py-3 text-[0.68rem] tracking-[0.14em] text-[#0D0D0D]"
             onClick={openOrder}
           >
-            Instant Order (COD)
+            {copy.product.order}
           </button>
         </div>
       </div>
@@ -109,6 +147,7 @@ export function ProductDetail({ product, shippingRates = defaultShippingRates }:
             merchandise: product.price * quantity,
           }}
           shippingRates={shippingRates}
+          copy={copy.checkout}
         />
       ) : null}
     </>
@@ -119,14 +158,16 @@ function ShadeSelector({
   shades,
   shade,
   onChange,
+  label,
 }: {
   shades: Shade[];
   shade: Shade;
   onChange: (shade: Shade) => void;
+  label: string;
 }) {
   return (
     <fieldset className="mt-10">
-      <legend className="type-eyebrow">Shade · {shade.name}</legend>
+      <legend className="type-eyebrow">{label} · {shade.name}</legend>
       <div className="mt-4 flex flex-wrap gap-3">
         {shades.map((item) => {
           const selected = item.id === shade.id;
@@ -147,16 +188,24 @@ function ShadeSelector({
   );
 }
 
-function QuantitySelector({ quantity, onChange }: { quantity: number; onChange: (quantity: number) => void }) {
+function QuantitySelector({
+  quantity,
+  onChange,
+  copy,
+}: {
+  quantity: number;
+  onChange: (quantity: number) => void;
+  copy: Dictionary["product"];
+}) {
   return (
     <fieldset className="mt-8">
-      <legend className="type-eyebrow">Quantity</legend>
+      <legend className="type-eyebrow">{copy.quantity}</legend>
       <div className="mt-4 flex w-fit items-center border border-gold/30">
         <button
           type="button"
           className="inline-flex size-11 items-center justify-center text-foreground hover:text-gold-bright"
           onClick={() => onChange(Math.max(1, quantity - 1))}
-          aria-label="Decrease quantity"
+          aria-label={copy.decrease}
         >
           <Minus strokeWidth={1.25} size={16} />
         </button>
@@ -167,7 +216,7 @@ function QuantitySelector({ quantity, onChange }: { quantity: number; onChange: 
           type="button"
           className="inline-flex size-11 items-center justify-center text-foreground hover:text-gold-bright"
           onClick={() => onChange(Math.min(8, quantity + 1))}
-          aria-label="Increase quantity"
+          aria-label={copy.increase}
         >
           <Plus strokeWidth={1.25} size={16} />
         </button>
@@ -176,11 +225,11 @@ function QuantitySelector({ quantity, onChange }: { quantity: number; onChange: 
   );
 }
 
-function IngredientBreakdown({ ingredients }: { ingredients: ProductPageData["ingredients"] }) {
+function IngredientBreakdown({ ingredients, copy }: { ingredients: ProductPageData["ingredients"]; copy: Dictionary["product"] }) {
   return (
     <section className="mt-16 border-t border-gold/20 pt-12 md:mt-20">
-      <p className="type-eyebrow">Formula</p>
-      <h2 className="type-headline mt-4">Key Ingredients & Benefits</h2>
+      <p className="type-eyebrow">{copy.formula}</p>
+      <h2 className="type-headline mt-4">{copy.ingredients}</h2>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ingredients.map((ingredient) => (
           <li key={ingredient.name}>
@@ -190,6 +239,14 @@ function IngredientBreakdown({ ingredients }: { ingredients: ProductPageData["in
       </ul>
     </section>
   );
+}
+
+function knownCategory(copy: Dictionary, category: string) {
+  return category in copy.category ? copy.category[category as Category] : category;
+}
+
+function knownMood(copy: Dictionary, mood: string) {
+  return mood in copy.mood ? copy.mood[mood as Mood] : mood;
 }
 
 function IngredientTip({ name, benefit, icon }: { name: string; benefit: string; icon: IngredientIcon }) {
@@ -209,7 +266,7 @@ function IngredientTip({ name, benefit, icon }: { name: string; benefit: string;
     >
       <button
         type="button"
-        className="flex w-full items-center gap-4 border border-gold/25 bg-card px-4 py-4 text-left"
+        className="flex w-full items-center gap-4 border border-gold/25 bg-card px-4 py-4 text-start"
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}
         onFocus={(event) => {
@@ -232,7 +289,7 @@ function IngredientTip({ name, benefit, icon }: { name: string; benefit: string;
         <p
           id={tipId}
           role="tooltip"
-          className="type-body absolute bottom-[calc(100%+0.75rem)] left-0 z-20 w-full border border-[#E5C158] bg-[#1A1A1A] px-4 py-3 text-[#F8F8F8] shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+          className="type-body absolute bottom-[calc(100%+0.75rem)] start-0 z-20 w-full border border-[#E5C158] bg-[#1A1A1A] px-4 py-3 text-[#F8F8F8] shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
         >
           {benefit}
         </p>

@@ -27,14 +27,24 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
   }
 
   const product = getProductPage(input.productId);
-  if (!product) {
+  const catalogPiece = product ? null : await prisma.product.findFirst({
+    where: { slug: input.productId, available: true },
+    select: { id: true, title: true, slug: true, price: true, discountPrice: true, stock: true, ingredients: true, category: { select: { name: true } } },
+  });
+  if (!product && !catalogPiece) {
     return { ok: false, error: "This piece is no longer available." };
   }
 
-  const shade = product.shades.find((item) => item.id === input.shadeId);
-  if (!shade) {
+  const shade = product?.shades.find((item) => item.id === input.shadeId);
+  if (product && !shade) {
     return { ok: false, error: "Choose a shade before ordering." };
   }
+  const shadeName = shade?.name ?? "Atelier";
+  const pieceName = product?.name ?? catalogPiece!.title;
+  const piecePrice = product?.price ?? catalogPiece!.discountPrice ?? catalogPiece!.price;
+  const pieceCategory = product?.category ?? catalogPiece!.category.name;
+  const pieceIngredients = product ? product.ingredients.map((item) => item.name) : catalogPiece!.ingredients;
+  const pieceSlug = product?.id ?? catalogPiece!.slug;
 
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 8) {
     return { ok: false, error: "Choose a quantity between 1 and 8." };
@@ -56,7 +66,7 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
     return { ok: false, error: "Choose a city from the list." };
   }
 
-  const merchandiseDh = product.price * input.quantity;
+  const merchandiseDh = piecePrice * input.quantity;
   const settings = await getStoreSettings();
   const deliveryDh = deliveryFee(city, merchandiseDh, shippingRatesFrom(settings)) ?? customer.delivery;
   const totalDh = merchandiseDh + deliveryDh;
@@ -64,31 +74,34 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
   let orderId: string;
   try {
     const order = await prisma.$transaction(async (tx) => {
-      const categorySlug = product.category.toLowerCase().replace(/\s+/g, "-");
+      const categorySlug = pieceCategory.toLowerCase().replace(/\s+/g, "-");
       const category = await tx.category.upsert({
         where: { slug: categorySlug },
-        update: { name: product.category },
-        create: { name: product.category, slug: categorySlug },
+        update: { name: pieceCategory },
+        create: { name: pieceCategory, slug: categorySlug },
       });
 
-      const savedProduct = await tx.product.upsert({
-        where: { slug: product.id },
-        update: {
-          title: product.name,
-          price: product.price,
-          ingredients: product.ingredients.map((item) => item.name),
-        },
-        create: {
-          title: product.name,
-          slug: product.id,
-          price: product.price,
-          categoryId: category.id,
-          ingredients: product.ingredients.map((item) => item.name),
-          images: [],
-          stock: 99,
-          featured: false,
-        },
-      });
+      const savedProduct = catalogPiece
+        ? await tx.product.findUnique({ where: { id: catalogPiece.id } })
+        : await tx.product.upsert({
+            where: { slug: pieceSlug },
+            update: {
+              title: pieceName,
+              price: piecePrice,
+              ingredients: pieceIngredients,
+            },
+            create: {
+              title: pieceName,
+              slug: pieceSlug,
+              price: piecePrice,
+              categoryId: category.id,
+              ingredients: pieceIngredients,
+              images: [],
+              stock: 99,
+              featured: false,
+            },
+          });
+      if (!savedProduct) throw new Error("OUT_OF_STOCK");
 
       if (savedProduct.stock < input.quantity) {
         throw new Error("OUT_OF_STOCK");
@@ -110,10 +123,10 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
           items: {
             create: {
               productId: savedProduct.id,
-              title: product.name,
-              shadeName: shade.name,
+              title: pieceName,
+              shadeName,
               quantity: input.quantity,
-              unitPrice: product.price,
+              unitPrice: piecePrice,
             },
           },
         },
@@ -131,8 +144,8 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
 
   const breakdown = {
     orderId,
-    productName: product.name,
-    shade: shade.name,
+    productName: pieceName,
+    shade: shadeName,
     quantity: input.quantity,
     merchandiseDh,
     deliveryDh,
