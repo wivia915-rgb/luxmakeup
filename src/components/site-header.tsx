@@ -3,6 +3,7 @@
 import { LanguageSwitch } from "@/components/language-switch";
 import type { Locale } from "@/lib/locale";
 import type { Dictionary } from "@/lib/messages";
+import { storeWhatsAppUrl } from "@/lib/store-contact";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -10,7 +11,19 @@ import { useEffect, useState } from "react";
 const iconButton =
   "inline-flex size-10 shrink-0 items-center justify-center border border-gold/30 text-foreground transition-colors hover:border-gold-bright hover:text-gold-bright";
 
-export function SiteHeader({ locale, copy }: { locale: Locale; copy: Dictionary }) {
+export function SiteHeader({
+  locale,
+  copy,
+  banner = "",
+  whatsapp = "",
+  email = "",
+}: {
+  locale: Locale;
+  copy: Dictionary;
+  banner?: string;
+  whatsapp?: string;
+  email?: string;
+}) {
   const [open, setOpen] = useState(false);
   const navigation = [
     { href: "#makeup", label: copy.nav.makeup },
@@ -35,11 +48,28 @@ export function SiteHeader({ locale, copy }: { locale: Locale; copy: Dictionary 
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const whatsappUrl = storeWhatsAppUrl(whatsapp);
+  const announcement = banner.trim() || copy.announcement;
+
   return (
     <header className="sticky top-0 z-40 border-b border-gold/20 bg-background/90 backdrop-blur-md">
-      <p className="type-caption border-b border-gold/15 px-5 py-2 text-center text-gold-bright md:px-10">
-        {copy.announcement}
-      </p>
+      <div className="border-b border-gold/15 px-5 py-2 text-center md:px-10">
+        <p className="type-caption text-gold-bright">{announcement}</p>
+        {whatsappUrl || email ? (
+          <p className="type-caption mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            {whatsappUrl ? (
+              <a href={whatsappUrl} className="text-foreground/70 hover:text-gold-bright">
+                WhatsApp
+              </a>
+            ) : null}
+            {email ? (
+              <a href={`mailto:${email}`} className="text-foreground/70 hover:text-gold-bright">
+                {email}
+              </a>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
       <div className="flex items-center justify-between gap-3 px-5 py-4 md:px-10">
         <Link
           href="/"

@@ -1,10 +1,10 @@
 "use client";
 
 import { createProduct, deleteProduct, toggleProductAvailability, updateProduct } from "@/app/actions/product-desk";
-import { deskCategories, type DeskProduct, type ProductDraft } from "@/lib/admin-catalog";
+import { deskCategories, type DeskProduct, type DeskVariant, type ProductDraft, type VariantDraft } from "@/lib/admin-catalog";
 import { formatDh } from "@/lib/products";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type Dispatch, type FormEvent, type SetStateAction } from "react";
 
 const emptyDraft: ProductDraft = {
   title: "",
@@ -13,7 +13,20 @@ const emptyDraft: ProductDraft = {
   category: "makeup",
   imageUrl: "",
   stock: "0",
+  variants: [],
 };
+
+function blankVariant(stock = "0"): VariantDraft {
+  return {
+    clientId: crypto.randomUUID(),
+    name: "",
+    colorCode: "",
+    size: "",
+    stock,
+    priceAdjustment: "0",
+    isActive: true,
+  };
+}
 
 export function ProductsDesk({ connected, products }: { connected: boolean; products: DeskProduct[] }) {
   const router = useRouter();
@@ -67,6 +80,15 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
       category: product.categorySlug,
       imageUrl: product.imageUrl,
       stock: String(product.stock),
+      variants: product.variants.map((variant) => ({
+        clientId: variant.id,
+        name: variant.name,
+        colorCode: variant.colorCode,
+        size: variant.size,
+        stock: String(variant.stock),
+        priceAdjustment: String(variant.priceAdjustment),
+        isActive: variant.isActive,
+      })),
     });
   }
 
@@ -95,7 +117,7 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
   function toggle(product: DeskProduct) {
     const previous = { available: product.available, stock: product.stock };
     const available = !product.available;
-    const stock = available && product.stock === 0 ? 1 : product.stock;
+    const stock = available && product.stock === 0 && product.variants.length === 0 ? 1 : product.stock;
     setNotice(null);
     setAvailability((current) => ({ ...current, [product.id]: available }));
     setStocks((current) => ({ ...current, [product.id]: stock }));
@@ -174,7 +196,9 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
                   <p className="font-serif text-2xl text-foreground">{product.title}</p>
                   <p className="type-caption mt-1">{product.categoryName}</p>
                   <p className="type-price mt-2">{formatDh(product.price)}</p>
-                  <StockBadge product={product} />
+                  <div className="mt-3">
+                    <VariantStock product={product} />
+                  </div>
                 </div>
               </div>
               <RowActions product={product} onEdit={() => openEdit(product)} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
@@ -184,13 +208,13 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
       </div>
 
       <div className="mt-4 hidden overflow-x-auto border border-gold/20 md:block">
-        <table className="w-full min-w-[880px] border-collapse text-left">
+        <table className="w-full min-w-[980px] border-collapse text-left">
           <thead className="bg-card">
             <tr className="type-eyebrow text-[0.62rem]">
               <th className="px-4 py-3 font-medium">Piece</th>
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Price</th>
-              <th className="px-4 py-3 font-medium">Stock</th>
+              <th className="px-4 py-3 font-medium">Variants</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
@@ -213,7 +237,7 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
                   <td className="type-body px-4 py-4">{product.categoryName}</td>
                   <td className="type-price px-4 py-4">{formatDh(product.price)}</td>
                   <td className="px-4 py-4">
-                    <StockBadge product={product} />
+                    <VariantStock product={product} />
                   </td>
                   <td className="px-4 py-4">
                     <RowActions product={product} onEdit={() => openEdit(product)} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
@@ -304,6 +328,48 @@ function PieceMark({ title }: { title: string }) {
   );
 }
 
+function variantLabel(variant: Pick<DeskVariant, "name" | "size">) {
+  if (!variant.size || variant.size.toLowerCase() === variant.name.toLowerCase()) return variant.name;
+  return `${variant.name} · ${variant.size}`;
+}
+
+function signedAdjustment(amount: number) {
+  if (amount === 0) return "";
+  const formatted = formatDh(Math.abs(amount));
+  return amount > 0 ? `+${formatted}` : `−${formatted}`;
+}
+
+function VariantStock({ product }: { product: DeskProduct }) {
+  const active = product.variants.filter((variant) => variant.isActive);
+  if (product.variants.length === 0) return <StockBadge product={product} />;
+
+  return (
+    <div>
+      {!product.available ? <p className="type-caption mb-2 text-foreground/55">Held</p> : null}
+      {active.length === 0 ? (
+        <p className="type-caption text-foreground/55">No active variant</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {active.map((variant) => (
+            <li key={variant.id} className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2">
+                {/^#[0-9A-F]{6}$/.test(variant.colorCode) ? (
+                  <span className="size-2.5 shrink-0 border border-gold/40" style={{ background: variant.colorCode }} aria-hidden />
+                ) : null}
+                <span className="type-caption truncate text-foreground">
+                  {variantLabel(variant)}
+                  {variant.priceAdjustment !== 0 ? <span className="text-[#E5C158]"> {signedAdjustment(variant.priceAdjustment)}</span> : null}
+                </span>
+              </span>
+              <span className="type-caption shrink-0 text-[#E5C158]">{variant.stock} in stock</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function StockBadge({ product }: { product: DeskProduct }) {
   const inStock = product.available && product.stock > 0;
   const label = !product.available
@@ -365,7 +431,7 @@ function ProductForm({
   editing: boolean;
   busy: boolean;
   notice: string | null;
-  onChange: (draft: ProductDraft) => void;
+  onChange: Dispatch<SetStateAction<ProductDraft | null>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -377,8 +443,8 @@ function ProductForm({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  function setField(field: keyof ProductDraft, value: string) {
-    onChange({ ...draft, [field]: value });
+  function setField(field: "title" | "description" | "price" | "category" | "imageUrl" | "stock", value: string) {
+    onChange((current) => (current ? { ...current, [field]: value } : current));
   }
 
   return (
@@ -388,7 +454,7 @@ function ProductForm({
         aria-modal="true"
         aria-labelledby="product-form-title"
         onSubmit={onSubmit}
-        className="max-h-[90svh] w-full max-w-lg overflow-y-auto border border-gold/30 bg-[#0D0D0D] px-6 py-6"
+        className="max-h-[90svh] w-full max-w-xl overflow-y-auto border border-gold/30 bg-[#0a0a0a] px-6 py-6"
       >
         <p className="type-eyebrow">{editing ? "Edit" : "New piece"}</p>
         <h2 id="product-form-title" className="mt-3 font-serif text-3xl text-foreground">
@@ -403,19 +469,22 @@ function ProductForm({
               value={draft.description}
               onChange={(event) => setField("description", event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-y border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+              className="mt-2 w-full resize-y border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
             />
           </label>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={draft.variants.length === 0 ? "grid gap-4 sm:grid-cols-2" : ""}>
             <Field label="Price (DH)" value={draft.price} inputMode="numeric" onChange={(value) => setField("price", value)} />
-            <Field label="Stock count" value={draft.stock} inputMode="numeric" onChange={(value) => setField("stock", value)} />
+            {draft.variants.length === 0 ? (
+              <Field label="Stock count" value={draft.stock} inputMode="numeric" onChange={(value) => setField("stock", value)} />
+            ) : null}
           </div>
+          <VariantEditor variants={draft.variants} onChange={onChange} />
           <label className="block">
             <span className="type-eyebrow">Category</span>
             <select
               value={draft.category}
               onChange={(event) => setField("category", event.target.value)}
-              className="mt-2 w-full border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158]"
+              className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158]"
             >
               {deskCategories.map((category) => (
                 <option key={category.slug} value={category.slug}>
@@ -451,16 +520,99 @@ function ProductForm({
   );
 }
 
+function VariantEditor({
+  variants,
+  onChange,
+}: {
+  variants: VariantDraft[];
+  onChange: Dispatch<SetStateAction<ProductDraft | null>>;
+}) {
+  function changeVariants(update: (variants: VariantDraft[], stock: string) => VariantDraft[]) {
+    onChange((current) => (current ? { ...current, variants: update(current.variants, current.stock) } : current));
+  }
+
+  function update(clientId: string, patch: Partial<VariantDraft>) {
+    changeVariants((items) => items.map((variant) => (variant.clientId === clientId ? { ...variant, ...patch } : variant)));
+  }
+
+  return (
+    <fieldset className="border border-gold/25 px-4 py-4">
+      <legend className="type-eyebrow px-2">Variants</legend>
+      <p className="type-caption">Shades such as Ruby Gold, or volumes such as 50ml. Each one keeps its own stock.</p>
+      <div className="mt-4 space-y-3">
+        {variants.map((variant, index) => (
+          <div key={variant.clientId} className="border border-gold/20 px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="type-caption text-[#E5C158]">Variant {index + 1}</span>
+              <button
+                type="button"
+                onClick={() => changeVariants((items) => items.filter((item) => item.clientId !== variant.clientId))}
+                className="type-caption text-foreground/70 hover:text-[#E7B4A8]"
+              >
+                Remove
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3">
+              <Field label="Shade or size" value={variant.name} placeholder="Ruby Gold" onChange={(value) => update(variant.clientId, { name: value })} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label="Color"
+                  value={variant.colorCode}
+                  placeholder="#8C1C13"
+                  onChange={(value) => update(variant.clientId, { colorCode: value })}
+                />
+                <Field label="Volume" value={variant.size} placeholder="50ml" onChange={(value) => update(variant.clientId, { size: value })} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label="Stock"
+                  value={variant.stock}
+                  inputMode="numeric"
+                  onChange={(value) => update(variant.clientId, { stock: value })}
+                />
+                <Field
+                  label="Price adjustment (DH)"
+                  value={variant.priceAdjustment}
+                  placeholder="0"
+                  onChange={(value) => update(variant.clientId, { priceAdjustment: value })}
+                />
+              </div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={variant.isActive}
+                  onChange={(event) => update(variant.clientId, { isActive: event.target.checked })}
+                  className="accent-[#D4AF37]"
+                />
+                <span className="type-caption text-foreground">Active</span>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => changeVariants((items, stock) => [...items, blankVariant(items.length === 0 ? stock || "0" : "0")])}
+        className="type-nav mt-4 border border-gold/40 px-4 py-3 text-gold-bright"
+      >
+        Add variant
+      </button>
+    </fieldset>
+  );
+}
+
 function Field({
   label,
   value,
   onChange,
   inputMode,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   inputMode?: "numeric" | "text";
+  placeholder?: string;
 }) {
   return (
     <label className="block">
@@ -468,8 +620,9 @@ function Field({
       <input
         value={value}
         inputMode={inputMode}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+        className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
       />
     </label>
   );

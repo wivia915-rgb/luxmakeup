@@ -26,11 +26,12 @@ export type CodDrawerProps = {
   open: boolean;
   line: CodLine;
   onClose: () => void;
+  freeShippingThreshold?: number;
 };
 
 const emptyFields: CodFields = { name: "", phone: "", city: "", address: "" };
 
-export function CodDrawer({ open, line, onClose }: CodDrawerProps) {
+export function CodDrawer({ open, line, onClose, freeShippingThreshold = 0 }: CodDrawerProps) {
   const titleId = useId();
   const listId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,8 @@ export function CodDrawer({ open, line, onClose }: CodDrawerProps) {
   const suggestions = useMemo(() => filterCities(fields.city), [fields.city]);
   const check = validateCod(fields);
   const resolvedCity = resolveCity(fields.city);
-  const fee = resolvedCity ? deliveryFee(resolvedCity) : null;
+  const fee = resolvedCity ? deliveryFee(resolvedCity, line.merchandise, freeShippingThreshold) : null;
+  const freeByThreshold = freeShippingThreshold > 0 && line.merchandise >= freeShippingThreshold;
   const payable = fee === null ? null : line.merchandise + fee;
 
   useEffect(() => {
@@ -169,7 +171,7 @@ export function CodDrawer({ open, line, onClose }: CodDrawerProps) {
             {placed ? (
               <div className="px-5 py-8">
                 <p className="type-body">
-                  Order placed for {line.name}. Pay {formatDh(line.merchandise + (deliveryFee(placed.city) ?? 0))} in cash when it arrives in{" "}
+                  Order placed for {line.name}. Pay {formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, freeShippingThreshold) ?? 0))} in cash when it arrives in{" "}
                   {resolveCity(placed.city)}.
                 </p>
                 <p className="type-caption mt-4">
@@ -318,7 +320,7 @@ export function CodDrawer({ open, line, onClose }: CodDrawerProps) {
                                 onClick={() => chooseCity(city)}
                               >
                                 <span>{city}</span>
-                                <span className="type-caption">{deliveryFee(city) === 0 ? "Free" : formatDh(deliveryFee(city) ?? 0)}</span>
+                                <span className="type-caption">{deliveryFee(city, line.merchandise, freeShippingThreshold) === 0 ? "Free" : formatDh(deliveryFee(city, line.merchandise, freeShippingThreshold) ?? 0)}</span>
                               </button>
                             </li>
                           ))
@@ -350,7 +352,7 @@ export function CodDrawer({ open, line, onClose }: CodDrawerProps) {
                     <div className="flex items-center justify-between gap-4">
                       <dt className="type-caption">Delivery</dt>
                       <dd className="type-caption text-gold-bright">
-                        {fee === null ? "Choose a city" : fee === 0 ? "Free in Fès" : formatDh(fee)}
+                        {fee === null ? "Choose a city" : fee === 0 ? (freeByThreshold ? "Free" : "Free in Fès") : formatDh(fee)}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4 pt-2">

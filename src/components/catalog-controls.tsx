@@ -8,7 +8,7 @@ import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 const chip =
   "type-nav border px-4 py-3 text-foreground/80 transition-colors hover:border-gold-bright hover:text-gold-bright";
 
-export function CatalogControls({ total, copy }: { total: number; copy: Dictionary }) {
+export function CatalogControls({ total, copy, freeShippingThreshold = 0 }: { total: number; copy: Dictionary; freeShippingThreshold?: number }) {
   const [category, setCategory] = useState<Category>("All");
   const [mood, setMood] = useState<Mood>("All");
   const [shown, setShown] = useState(total);
@@ -131,7 +131,7 @@ export function CatalogControls({ total, copy }: { total: number; copy: Dictiona
         </div>
       ) : null}
 
-      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} /> : null}
+      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} freeShippingThreshold={freeShippingThreshold} /> : null}
     </>
   );
 }

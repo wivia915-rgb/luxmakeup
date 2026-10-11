@@ -1,5 +1,6 @@
 import { ProductDetail } from "@/components/product-detail";
 import { getProductPage } from "@/lib/product-story";
+import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh, products } from "@/lib/products";
 import { siteUrl } from "@/lib/site";
 import type { Metadata } from "next";
@@ -51,6 +52,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = getProductPage(slug);
   if (!product) notFound();
+  const settings = await getStoreSettings();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -71,7 +73,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main id="main">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <ProductDetail product={product} />
+      <ProductDetail product={product} freeShippingThreshold={settings.freeShippingThreshold} />
     </main>
   );
 }

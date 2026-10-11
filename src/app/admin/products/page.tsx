@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Products",
-  description: "Lux Makeup collection on the atelier desk.",
+  description: "Lux Makeup collection on the atelier desk, with shades, sizes, and stock.",
 };
 
 export default async function AdminProductsPage() {

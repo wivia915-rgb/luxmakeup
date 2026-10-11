@@ -1,6 +1,7 @@
 "use server";
 
 import { deliveryFee, resolveCity, validateCod } from "@/lib/cod";
+import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh } from "@/lib/products";
 import { getProductPage } from "@/lib/product-story";
 import { prisma } from "@/lib/prisma";
@@ -56,7 +57,8 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
   }
 
   const merchandiseDh = product.price * input.quantity;
-  const deliveryDh = deliveryFee(city) ?? customer.delivery;
+  const settings = await getStoreSettings();
+  const deliveryDh = deliveryFee(city, merchandiseDh, settings.freeShippingThreshold) ?? customer.delivery;
   const totalDh = merchandiseDh + deliveryDh;
 
   let orderId: string;

@@ -1,9 +1,11 @@
 import { MetaPixel } from "@/components/meta-pixel";
 import { SiteHeader } from "@/components/site-header";
+import { StoreGate } from "@/components/store-gate";
 import { cormorant, cormorantItalic, cormorantMedium, naskh, outfit, outfitLight } from "@/lib/fonts";
 import { getLocale } from "@/lib/get-locale";
 import { messages } from "@/lib/messages";
 import { siteUrl } from "@/lib/site";
+import { getStoreSettings } from "@/lib/store-settings";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -44,6 +46,7 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const copy = messages[locale];
+  const settings = await getStoreSettings();
 
   return (
     <html
@@ -60,8 +63,21 @@ export default async function RootLayout({
           {copy.skip}
         </a>
         <div className="mx-auto min-h-screen xl:max-w-[90rem] xl:border-x xl:border-gold/20">
-          <SiteHeader locale={locale} copy={copy} />
-          {children}
+          <SiteHeader
+            locale={locale}
+            copy={copy}
+            banner={settings.announcement}
+            whatsapp={settings.whatsapp}
+            email={settings.supportEmail}
+          />
+          <StoreGate
+            maintenance={settings.maintenanceMode}
+            locale={locale}
+            whatsapp={settings.whatsapp}
+            email={settings.supportEmail}
+          >
+            {children}
+          </StoreGate>
         </div>
       </body>
     </html>

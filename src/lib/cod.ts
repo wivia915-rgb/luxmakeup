@@ -65,9 +65,10 @@ export function filterCities(query: string): string[] {
     .map((city) => city.name);
 }
 
-export function deliveryFee(city: string): number | null {
+export function deliveryFee(city: string, merchandiseDh = 0, freeShippingThreshold = 0): number | null {
   const resolved = resolveCity(city);
   if (!resolved) return null;
+  if (freeShippingThreshold > 0 && merchandiseDh >= freeShippingThreshold) return 0;
   return foldCity(resolved) === foldCity("Fès") ? 0 : STANDARD_DELIVERY_DH;
 }
 

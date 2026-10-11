@@ -9,6 +9,16 @@ export const deskCategories = [
 
 export type DeskCategorySlug = (typeof deskCategories)[number]["slug"];
 
+export type DeskVariant = {
+  id: string;
+  name: string;
+  colorCode: string;
+  size: string;
+  stock: number;
+  priceAdjustment: number;
+  isActive: boolean;
+};
+
 export type DeskProduct = {
   id: string;
   title: string;
@@ -19,6 +29,17 @@ export type DeskProduct = {
   imageUrl: string;
   categoryName: string;
   categorySlug: DeskCategorySlug;
+  variants: DeskVariant[];
+};
+
+export type VariantDraft = {
+  clientId: string;
+  name: string;
+  colorCode: string;
+  size: string;
+  stock: string;
+  priceAdjustment: string;
+  isActive: boolean;
 };
 
 export type ProductDraft = {
@@ -28,6 +49,16 @@ export type ProductDraft = {
   category: string;
   imageUrl: string;
   stock: string;
+  variants: VariantDraft[];
+};
+
+export type VariantWrite = {
+  name: string;
+  colorCode: string | null;
+  size: string | null;
+  stock: number;
+  priceAdjustment: number;
+  isActive: boolean;
 };
 
 export type ProductWrite = {
@@ -37,6 +68,7 @@ export type ProductWrite = {
   category: DeskCategorySlug;
   imageUrl: string;
   stock: number;
+  variants: VariantWrite[];
 };
 
 const emptyDesk = { connected: false as const, products: [] as DeskProduct[] };
@@ -94,10 +126,89 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
     return { ok: false, error: "Stock cannot pass 9999." };
   }
 
+  const variants = parseVariants(input.variants, price);
+  if (!variants.ok) return variants;
+
+  const countedStock = variants.value.length > 0 ? variants.value.reduce((sum, variant) => sum + (variant.isActive ? variant.stock : 0), 0) : stock;
+
   return {
     ok: true,
-    value: { title, description, price, category: category.slug, imageUrl, stock },
+    value: { title, description, price, category: category.slug, imageUrl, stock: countedStock, variants: variants.value },
   };
+}
+
+function parseVariants(input: VariantDraft[] | undefined, price: number): { ok: true; value: VariantWrite[] } | { ok: false; error: string } {
+  if (input === undefined) return { ok: true, value: [] };
+  if (!Array.isArray(input)) return { ok: false, error: "Variants could not be read." };
+  if (input.length > 12) return { ok: false, error: "A piece can hold up to 12 variants." };
+
+  const seen = new Set<string>();
+  const value: VariantWrite[] = [];
+
+  for (const [index, variant] of input.entries()) {
+    const label = `Variant ${index + 1}`;
+    const name = String(variant?.name ?? "").trim().replace(/\s+/g, " ");
+    const size = String(variant?.size ?? "").trim().replace(/\s+/g, " ");
+    if (name.length < 1 || name.length > 40) {
+      return { ok: false, error: `${label} needs a shade or size, such as Ruby Gold or 50ml.` };
+    }
+    if (size.length > 24) {
+      return { ok: false, error: `${label} volume is too long.` };
+    }
+
+    const color = normalizeColor(String(variant?.colorCode ?? ""));
+    if (color === "invalid") {
+      return { ok: false, error: `${label} color needs a hex code, such as #8C1C13.` };
+    }
+
+    const stockText = String(variant?.stock ?? "").trim();
+    if (!/^\d+$/.test(stockText)) {
+      return { ok: false, error: `${label} stock is a whole number.` };
+    }
+    const variantStock = Number(stockText);
+    if (variantStock > 9999) {
+      return { ok: false, error: `${label} stock cannot pass 9999.` };
+    }
+
+    const adjustmentText = String(variant?.priceAdjustment ?? "0").trim();
+    if (!/^-?\d+$/.test(adjustmentText)) {
+      return { ok: false, error: `${label} price adjustment is a whole amount in DH.` };
+    }
+    const priceAdjustment = Number(adjustmentText);
+    const adjusted = price + priceAdjustment;
+    if (adjusted < 1 || adjusted > 100000) {
+      return { ok: false, error: `${label} must keep the price between 1 and 100 000 DH.` };
+    }
+
+    const key = `${name.toLowerCase()}|${size.toLowerCase()}`;
+    if (seen.has(key)) {
+      return { ok: false, error: "Each shade and size can only appear once." };
+    }
+    seen.add(key);
+
+    value.push({
+      name,
+      colorCode: color,
+      size: size || null,
+      stock: variantStock,
+      priceAdjustment,
+      isActive: variant?.isActive !== false,
+    });
+  }
+
+  return { ok: true, value };
+}
+
+function normalizeColor(value: string): string | null | "invalid" {
+  const raw = value.trim();
+  if (!raw) return null;
+  const withHash = raw.startsWith("#") ? raw : `#${raw}`;
+  if (/^#[0-9a-fA-F]{3}$/.test(withHash)) {
+    const [red, green, blue] = withHash.slice(1);
+    return `#${red}${red}${green}${green}${blue}${blue}`.toUpperCase();
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(withHash)) return withHash.toUpperCase();
+  return "invalid";
 }
 
 export async function getProductDesk(): Promise<{ connected: boolean; products: DeskProduct[] }> {
@@ -113,6 +224,18 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
         available: true,
         images: true,
         category: { select: { name: true, slug: true } },
+        variants: {
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            colorCode: true,
+            size: true,
+            stock: true,
+            priceAdjustment: true,
+            isActive: true,
+          },
+        },
       },
     });
 
@@ -128,6 +251,15 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
         imageUrl: product.images[0] ?? "",
         categoryName: deskCategoryLabel(product.category.slug, product.category.name),
         categorySlug: deskCategoryValue(product.category.slug),
+        variants: product.variants.map((variant) => ({
+          id: variant.id,
+          name: variant.name,
+          colorCode: variant.colorCode ?? "",
+          size: variant.size ?? "",
+          stock: variant.stock,
+          priceAdjustment: variant.priceAdjustment,
+          isActive: variant.isActive,
+        })),
       })),
     };
   } catch (error) {

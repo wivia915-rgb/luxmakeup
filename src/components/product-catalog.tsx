@@ -1,6 +1,7 @@
 import { CatalogControls } from "@/components/catalog-controls";
 import { ProductStill } from "@/components/product-still";
 import { getLocale } from "@/lib/get-locale";
+import { getStoreSettings } from "@/lib/store-settings";
 import { messages } from "@/lib/messages";
 import { getProductPage } from "@/lib/product-story";
 import { formatDh, products } from "@/lib/products";
@@ -8,7 +9,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export async function ProductCatalog() {
-  const copy = messages[await getLocale()];
+  const [copy, settings] = await Promise.all([getLocale().then((locale) => messages[locale]), getStoreSettings()]);
 
   return (
     <section id="edit" className="scroll-mt-28 px-5 py-16 [content-visibility:auto] [contain-intrinsic-size:auto_2400px] md:px-10 md:py-20">
@@ -20,7 +21,7 @@ export async function ProductCatalog() {
         <p className="type-body max-w-sm">{copy.catalog.lead}</p>
       </div>
 
-      <CatalogControls total={products.length} copy={copy} />
+      <CatalogControls total={products.length} copy={copy} freeShippingThreshold={settings.freeShippingThreshold} />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {products.map((product) => (

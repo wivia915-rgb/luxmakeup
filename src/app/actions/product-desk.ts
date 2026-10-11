@@ -1,6 +1,6 @@
 "use server";
 
-import { deskCategories, parseProductDraft, type ProductDraft } from "@/lib/admin-catalog";
+import { deskCategories, parseProductDraft, type ProductDraft, type VariantWrite } from "@/lib/admin-catalog";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -22,6 +22,7 @@ export async function createProduct(input: ProductDraft) {
         available: parsed.value.stock > 0,
         images: parsed.value.imageUrl ? [parsed.value.imageUrl] : [],
         categoryId,
+        variants: { create: variantRows(parsed.value.variants) },
       },
     });
   } catch (error) {
@@ -57,6 +58,10 @@ export async function updateProduct(id: string, input: ProductDraft) {
         available,
         images: parsed.value.imageUrl ? [parsed.value.imageUrl] : [],
         categoryId,
+        variants: {
+          deleteMany: {},
+          create: variantRows(parsed.value.variants),
+        },
       },
     });
   } catch (error) {
@@ -74,12 +79,12 @@ export async function toggleProductAvailability(id: string) {
   try {
     const product = await prisma.product.findUnique({
       where: { id },
-      select: { available: true, stock: true },
+      select: { available: true, stock: true, _count: { select: { variants: true } } },
     });
     if (!product) return { ok: false as const, error: "This piece is no longer in the catalog." };
 
     const available = !product.available;
-    const stock = available && product.stock === 0 ? 1 : product.stock;
+    const stock = available && product.stock === 0 && product._count.variants === 0 ? 1 : product.stock;
     await prisma.product.update({
       where: { id },
       data: { available, stock },
@@ -136,6 +141,18 @@ async function uniqueSlug(title: string) {
     suffix += 1;
   }
   return slug;
+}
+
+function variantRows(variants: VariantWrite[]) {
+  return variants.map((variant, index) => ({
+    name: variant.name,
+    colorCode: variant.colorCode,
+    size: variant.size,
+    stock: variant.stock,
+    priceAdjustment: variant.priceAdjustment,
+    isActive: variant.isActive,
+    sortOrder: index,
+  }));
 }
 
 function isId(id: string) {

@@ -18,7 +18,7 @@ const icons = {
   flower: Flower2,
 } as const;
 
-export function ProductDetail({ product }: { product: ProductPageData }) {
+export function ProductDetail({ product, freeShippingThreshold = 0 }: { product: ProductPageData; freeShippingThreshold?: number }) {
   const [shade, setShade] = useState<Shade>(product.shades[0]);
   const [quantity, setQuantity] = useState(1);
   const [ordering, setOrdering] = useState(false);
@@ -107,6 +107,7 @@ export function ProductDetail({ product }: { product: ProductPageData }) {
             detail: `${shade.name} · ×${quantity}`,
             merchandise: product.price * quantity,
           }}
+          freeShippingThreshold={freeShippingThreshold}
         />
       ) : null}
     </>
