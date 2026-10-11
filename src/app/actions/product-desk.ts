@@ -79,20 +79,17 @@ export async function toggleProductAvailability(id: string) {
     if (!product) return { ok: false as const, error: "This piece is no longer in the catalog." };
 
     const available = !product.available;
+    const stock = available && product.stock === 0 ? 1 : product.stock;
     await prisma.product.update({
       where: { id },
-      data: {
-        available,
-        stock: available && product.stock === 0 ? 1 : product.stock,
-      },
+      data: { available, stock },
     });
+    refreshDesk();
+    return { ok: true as const, available, stock };
   } catch (error) {
     console.error("Product availability was not updated", error instanceof Error ? error.name : "unknown");
     return { ok: false as const, error: "Availability could not be changed." };
   }
-
-  refreshDesk();
-  return { ok: true as const };
 }
 
 export async function deleteProduct(id: string) {
