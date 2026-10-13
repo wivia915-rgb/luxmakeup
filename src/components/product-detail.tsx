@@ -1,6 +1,7 @@
 "use client";
 
-import type { CodDrawerProps } from "@/components/cod-drawer";
+import { CodDrawer } from "@/components/cod-drawer";
+import { CouponField, type AppliedCoupon } from "@/components/coupon-field";
 import { ProductStage } from "@/components/product-stage";
 import type { IngredientIcon, ProductPageData, Shade } from "@/lib/product-story";
 import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
@@ -9,7 +10,7 @@ import { formatDh, type Category, type Mood } from "@/lib/products";
 import { trackCommerce } from "@/lib/meta";
 import { Droplets, Flower2, Gem, Leaf, Minus, Plus, Sparkles, SunMedium } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useState, type ComponentType } from "react";
+import { useEffect, useId, useState } from "react";
 
 const icons = {
   droplet: Droplets,
@@ -38,7 +39,9 @@ export function ProductDetail({
   const [shade, setShade] = useState<Shade>(product.shades[0]);
   const [quantity, setQuantity] = useState(1);
   const [ordering, setOrdering] = useState(false);
-  const [Drawer, setDrawer] = useState<ComponentType<CodDrawerProps> | null>(null);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
+  const merchandise = product.price * quantity;
+  const goods = Math.max(0, merchandise - (coupon?.discountDh ?? 0));
 
   useEffect(() => {
     trackCommerce("ViewContent", {
@@ -53,8 +56,6 @@ export function ProductDetail({
 
   function openOrder() {
     setOrdering(true);
-    if (Drawer) return;
-    void import("@/components/cod-drawer").then((mod) => setDrawer(() => mod.CodDrawer));
   }
 
   return (
@@ -99,7 +100,11 @@ export function ProductDetail({
             <h1 className="type-headline mt-4">{product.name}</h1>
             <p className="type-italic mt-3 text-2xl text-gold-bright">{product.moods.map((mood) => knownMood(copy, mood)).join(" · ")}</p>
             <p className="type-lead mt-6 max-w-xl">{product.description}</p>
-            <p className="type-price mt-6">{formatDh(product.price)}</p>
+            <p className="type-price mt-6">{formatDh(coupon ? goods : product.price)}</p>
+            {coupon ? <p className="type-caption mt-1 line-through">{formatDh(merchandise)}</p> : null}
+            <div className="mt-6 max-w-md">
+              <CouponField merchandiseDh={merchandise} copy={copy.checkout} applied={coupon} onApplied={setCoupon} />
+            </div>
 
             <ShadeSelector shades={product.shades} shade={shade} onChange={setShade} label={copy.product.shade} />
             <QuantitySelector quantity={quantity} onChange={setQuantity} copy={copy.product} />
@@ -123,7 +128,7 @@ export function ProductDetail({
           {product.name} · {shade.name} · ×{quantity}
         </p>
         <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="type-price">{formatDh(product.price * quantity)}</p>
+          <p className="type-price">{formatDh(goods)}</p>
           <button
             type="button"
             className="type-nav bg-[#D4AF37] px-4 py-3 text-[0.68rem] tracking-[0.14em] text-[#0D0D0D]"
@@ -134,22 +139,22 @@ export function ProductDetail({
         </div>
       </div>
 
-      {Drawer ? (
-        <Drawer
-          open={ordering}
-          onClose={() => setOrdering(false)}
-          line={{
-            productId: product.id,
-            shadeId: shade.id,
-            quantity,
-            name: product.name,
-            detail: `${shade.name} · ×${quantity}`,
-            merchandise: product.price * quantity,
-          }}
-          shippingRates={shippingRates}
-          copy={copy.checkout}
-        />
-      ) : null}
+      <CodDrawer
+        open={ordering}
+        onClose={() => setOrdering(false)}
+        line={{
+          productId: product.id,
+          shadeId: shade.id,
+          quantity,
+          name: product.name,
+          detail: `${shade.name} · ×${quantity}`,
+          merchandise,
+          couponCode: coupon?.code ?? "",
+          discountDh: coupon?.discountDh ?? 0,
+        }}
+        shippingRates={shippingRates}
+        copy={copy.checkout}
+      />
     </>
   );
 }

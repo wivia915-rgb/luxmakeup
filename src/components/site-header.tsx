@@ -26,10 +26,10 @@ export function SiteHeader({
 }) {
   const [open, setOpen] = useState(false);
   const navigation = [
-    { href: "#makeup", label: copy.nav.makeup },
-    { href: "#parfums", label: copy.nav.parfums },
-    { href: "#skin-care", label: copy.nav.skin },
-    { href: "#maison", label: copy.nav.maison },
+    { href: "/#makeup", label: copy.nav.makeup },
+    { href: "/#parfums", label: copy.nav.parfums },
+    { href: "/#skin-care", label: copy.nav.skin },
+    { href: "/#maison", label: copy.nav.maison },
   ];
 
   useEffect(() => {
@@ -80,9 +80,9 @@ export function SiteHeader({
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
           {navigation.map((item) => (
-            <a key={item.href} href={item.href} className="type-nav text-foreground/80 transition-colors hover:text-gold-bright">
+            <Link key={item.href} href={item.href} className="type-nav text-foreground/80 transition-colors hover:text-gold-bright">
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -117,13 +117,13 @@ export function SiteHeader({
           <ul className="flex flex-col px-5 py-2">
             {navigation.map((item) => (
               <li key={item.href} className="border-b border-gold/15 last:border-b-0">
-                <a
+                <Link
                   href={item.href}
                   className="type-nav block py-4 text-foreground"
                   onClick={() => setOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

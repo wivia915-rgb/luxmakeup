@@ -42,7 +42,6 @@ export async function ProductCatalog() {
           >
             <Link
               href={`/product/${product.id}`}
-              prefetch={false}
               className="relative block aspect-[4/5] overflow-hidden bg-[#0D0D0D]"
               aria-label={copy.catalog.view.replace("{name}", product.name)}
             >
@@ -58,7 +57,7 @@ export async function ProductCatalog() {
             <div className="flex flex-1 flex-col p-6 md:p-7">
               <p className="type-caption">{copy.category[product.category]}</p>
               <h3 className="type-title mt-3">
-                <Link href={`/product/${product.id}`} prefetch={false}>
+                <Link href={`/product/${product.id}`}>
                   {product.name}
                 </Link>
               </h3>

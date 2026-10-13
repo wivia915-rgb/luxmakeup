@@ -1,6 +1,7 @@
 "use client";
 
 import { placeCodOrder } from "@/app/actions/place-cod-order";
+import { CouponField, type AppliedCoupon } from "@/components/coupon-field";
 import { defaultShippingRates, deliveryFee, filterCities, resolveCity, validateCod, type CodFields, type ShippingRates } from "@/lib/cod";
 import { trackCommerce } from "@/lib/meta";
 import type { Dictionary } from "@/lib/messages";
@@ -21,6 +22,8 @@ type CodLine = {
   name: string;
   detail: string;
   merchandise: number;
+  couponCode?: string;
+  discountDh?: number;
 };
 
 export type CodDrawerProps = {
@@ -46,14 +49,23 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
   const [placed, setPlaced] = useState<CodFields | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(
+    line.couponCode && line.discountDh ? { code: line.couponCode, discountDh: line.discountDh } : null,
+  );
   onCloseRef.current = onClose;
+
+  const goods = Math.max(0, line.merchandise - (coupon?.discountDh ?? 0));
+
+  useEffect(() => {
+    setCoupon(line.couponCode && line.discountDh ? { code: line.couponCode, discountDh: line.discountDh } : null);
+  }, [line.couponCode, line.discountDh, line.productId]);
 
   const suggestions = useMemo(() => filterCities(fields.city), [fields.city]);
   const check = validateCod(fields);
   const resolvedCity = resolveCity(fields.city);
-  const fee = resolvedCity ? deliveryFee(resolvedCity, line.merchandise, shippingRates) : null;
-  const freeByThreshold = shippingRates.freeThreshold > 0 && line.merchandise >= shippingRates.freeThreshold;
-  const payable = fee === null ? null : line.merchandise + fee;
+  const fee = resolvedCity ? deliveryFee(resolvedCity, goods, shippingRates) : null;
+  const freeByThreshold = shippingRates.freeThreshold > 0 && goods >= shippingRates.freeThreshold;
+  const payable = fee === null ? null : goods + fee;
 
   useEffect(() => {
     if (!open || !line.productId) return;
@@ -162,7 +174,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ duration: 0.38, ease }}
+            transition={{ duration: 0.2, ease }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-gold/20 px-5 py-4">
@@ -188,7 +200,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                 <p className="type-body">
                   {copy.placed
                     .replace("{name}", line.name)
-                    .replace("{total}", formatDh(line.merchandise + (deliveryFee(placed.city, line.merchandise, shippingRates) ?? 0)))
+                    .replace("{total}", formatDh(goods + (deliveryFee(placed.city, goods, shippingRates) ?? 0)))
                     .replace("{city}", resolveCity(placed.city) ?? placed.city)}
                 </p>
                 <p className="type-caption mt-4">
@@ -222,6 +234,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                     phone: fields.phone,
                     city: fields.city,
                     address: fields.address,
+                    couponCode: coupon?.code ?? "",
                   });
                   setSubmitting(false);
                   if (!result.ok) {
@@ -246,7 +259,12 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                     {line.name}
                     {line.detail ? ` · ${line.detail}` : ""}
                   </p>
-                  <p className="type-price mt-2">{formatDh(line.merchandise)}</p>
+                  <p className="type-price mt-2">{formatDh(goods)}</p>
+                  {coupon ? <p className="type-caption mt-1 line-through">{formatDh(line.merchandise)}</p> : null}
+
+                  <div className="mt-6">
+                    <CouponField merchandiseDh={line.merchandise} copy={copy} applied={coupon} onApplied={setCoupon} />
+                  </div>
 
                   <label className="mt-6 block">
                     <span className="type-eyebrow">{copy.fullName}</span>
@@ -338,7 +356,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                               >
                                 <span>{city}</span>
                                 <span className="type-caption">
-                                  {deliveryFee(city, line.merchandise, shippingRates) === 0 ? copy.free : formatDh(deliveryFee(city, line.merchandise, shippingRates) ?? 0)}
+                                  {deliveryFee(city, goods, shippingRates) === 0 ? copy.free : formatDh(deliveryFee(city, goods, shippingRates) ?? 0)}
                                 </span>
                               </button>
                             </li>
@@ -368,6 +386,12 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                       <dt className="type-caption">{copy.pieces}</dt>
                       <dd className="type-caption text-foreground">{formatDh(line.merchandise)}</dd>
                     </div>
+                    {coupon ? (
+                      <div className="flex items-center justify-between gap-4">
+                        <dt className="type-caption">{copy.discount}</dt>
+                        <dd className="type-caption text-[#E5C158]">−{formatDh(coupon.discountDh)}</dd>
+                      </div>
+                    ) : null}
                     <div className="flex items-center justify-between gap-4">
                       <dt className="type-caption">{copy.delivery}</dt>
                       <dd className="type-caption text-gold-bright">{feeLabel(fee, resolvedCity)}</dd>

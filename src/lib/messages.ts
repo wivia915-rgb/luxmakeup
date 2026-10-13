@@ -43,6 +43,12 @@ export type Dictionary = {
     pieces: string;
     delivery: string;
     toPay: string;
+    coupon: string;
+    couponPlaceholder: string;
+    apply: string;
+    applying: string;
+    remove: string;
+    discount: string;
     sending: string;
     submit: string;
     submitIdle: string;
@@ -143,6 +149,12 @@ export const messages: Record<Locale, Dictionary> = {
       pieces: "Pieces",
       delivery: "Delivery",
       toPay: "To pay",
+      coupon: "Coupon",
+      couponPlaceholder: "Code",
+      apply: "Apply",
+      applying: "Applying",
+      remove: "Remove",
+      discount: "Coupon",
       sending: "Sending order",
       submit: "Order · {total} COD",
       submitIdle: "Order · pay on delivery",
@@ -159,6 +171,11 @@ export const messages: Record<Locale, Dictionary> = {
         "Choose a city from the list.": "Choose a city from the list.",
         "This piece is out of stock.": "This piece is out of stock.",
         "The order could not be saved. Try again in a moment.": "The order could not be saved. Try again in a moment.",
+        "Enter a coupon code.": "Enter a coupon code.",
+        "That coupon is not in the book.": "That coupon is not in the book.",
+        "That coupon is not active.": "That coupon is not active.",
+        "That coupon has expired.": "That coupon has expired.",
+        "That coupon could not be applied.": "That coupon could not be applied.",
       },
     },
     catalog: {
@@ -247,6 +264,12 @@ export const messages: Record<Locale, Dictionary> = {
       pieces: "Pièces",
       delivery: "Livraison",
       toPay: "À payer",
+      coupon: "Coupon",
+      couponPlaceholder: "Code",
+      apply: "Appliquer",
+      applying: "Application",
+      remove: "Retirer",
+      discount: "Coupon",
       sending: "Envoi de la commande",
       submit: "Commander · {total}",
       submitIdle: "Commander · paiement à la livraison",
@@ -263,6 +286,11 @@ export const messages: Record<Locale, Dictionary> = {
         "Choose a city from the list.": "Choisissez une ville dans la liste.",
         "This piece is out of stock.": "Cette pièce est en rupture.",
         "The order could not be saved. Try again in a moment.": "La commande n'a pas pu être enregistrée. Réessayez dans un instant.",
+        "Enter a coupon code.": "Saisissez un code.",
+        "That coupon is not in the book.": "Ce coupon n'est pas dans le livre.",
+        "That coupon is not active.": "Ce coupon n'est pas actif.",
+        "That coupon has expired.": "Ce coupon a expiré.",
+        "That coupon could not be applied.": "Ce coupon n'a pas pu être appliqué.",
       },
     },
     catalog: {
@@ -377,6 +405,12 @@ export const messages: Record<Locale, Dictionary> = {
       pieces: "القطع",
       delivery: "التوصيل",
       toPay: "للدفع",
+      coupon: "القسيمة",
+      couponPlaceholder: "الكود",
+      apply: "تطبيق",
+      applying: "جارٍ التطبيق",
+      remove: "إزالة",
+      discount: "القسيمة",
       sending: "جارٍ إرسال الطلب",
       submit: "اطلب · {total}",
       submitIdle: "اطلب · الدفع عند الاستلام",
@@ -393,6 +427,11 @@ export const messages: Record<Locale, Dictionary> = {
         "Choose a city from the list.": "اختاروا مدينة من القائمة.",
         "This piece is out of stock.": "نفد مخزون هذه القطعة.",
         "The order could not be saved. Try again in a moment.": "تعذّر حفظ الطلب. أعيدوا المحاولة بعد لحظة.",
+        "Enter a coupon code.": "أدخلوا الكود.",
+        "That coupon is not in the book.": "هذه القسيمة ليست في السجل.",
+        "That coupon is not active.": "هذه القسيمة غير مفعّلة.",
+        "That coupon has expired.": "انتهت صلاحية هذه القسيمة.",
+        "That coupon could not be applied.": "تعذّر تطبيق هذه القسيمة.",
       },
     },
     catalog: {

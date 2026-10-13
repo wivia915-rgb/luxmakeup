@@ -1,6 +1,7 @@
 "use server";
 
 import { deliveryFee, resolveCity, shippingRatesFrom, validateCod } from "@/lib/cod";
+import { discountForCoupon, normalizeCouponCode } from "@/lib/coupon-quote";
 import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh } from "@/lib/products";
 import { getProductPage } from "@/lib/product-story";
@@ -14,6 +15,7 @@ export type PlaceCodOrderInput = {
   phone: string;
   city: string;
   address: string;
+  couponCode?: string;
 };
 
 export type PlaceCodOrderResult =
@@ -68,12 +70,31 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
 
   const merchandiseDh = piecePrice * input.quantity;
   const settings = await getStoreSettings();
-  const deliveryDh = deliveryFee(city, merchandiseDh, shippingRatesFrom(settings)) ?? customer.delivery;
-  const totalDh = merchandiseDh + deliveryDh;
+  const rates = shippingRatesFrom(settings);
+  const couponCode = normalizeCouponCode(input.couponCode ?? "");
 
   let orderId: string;
+  let discountDh = 0;
+  let deliveryDh = 0;
+  let totalDh = 0;
   try {
     const order = await prisma.$transaction(async (tx) => {
+      if (couponCode) {
+        const coupon = await tx.coupon.findUnique({
+          where: { code: couponCode },
+          select: { id: true, discountPercentage: true, fixedAmount: true, isActive: true, validUntil: true },
+        });
+        if (!coupon) throw new Error("COUPON_MISSING");
+        const priced = discountForCoupon(merchandiseDh, coupon);
+        if (!priced.ok) throw new Error(priced.error);
+        discountDh = priced.discountDh;
+        await tx.coupon.update({ where: { id: coupon.id }, data: { usageCount: { increment: 1 } } });
+      }
+
+      const goodsDh = merchandiseDh - discountDh;
+      deliveryDh = deliveryFee(city, goodsDh, rates) ?? customer.delivery ?? 0;
+      totalDh = goodsDh + deliveryDh;
+
       const categorySlug = pieceCategory.toLowerCase().replace(/\s+/g, "-");
       const category = await tx.category.upsert({
         where: { slug: categorySlug },
@@ -138,6 +159,12 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
     if (error instanceof Error && error.message === "OUT_OF_STOCK") {
       return { ok: false, error: "This piece is out of stock." };
     }
+    if (error instanceof Error && error.message === "COUPON_MISSING") {
+      return { ok: false, error: "That coupon is not in the book." };
+    }
+    if (error instanceof Error && error.message.startsWith("That coupon")) {
+      return { ok: false, error: error.message };
+    }
     console.error("COD order was not saved", error instanceof Error ? error.name : "unknown");
     return { ok: false, error: "The order could not be saved. Try again in a moment." };
   }
@@ -148,6 +175,7 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
     shade: shadeName,
     quantity: input.quantity,
     merchandiseDh,
+    discountDh,
     deliveryDh,
     totalDh,
     currency: "MAD",
@@ -179,6 +207,7 @@ function whatsAppOrderLink(
     shade: string;
     quantity: number;
     merchandiseDh: number;
+    discountDh: number;
     deliveryDh: number;
     totalDh: number;
     customer: { name: string; phone: string; city: string; address: string };
@@ -192,6 +221,7 @@ function whatsAppOrderLink(
     `Shade: ${order.shade}`,
     `Quantity: ${order.quantity}`,
     `Pieces: ${formatDh(order.merchandiseDh)}`,
+    ...(order.discountDh > 0 ? [`Coupon: −${formatDh(order.discountDh)}`] : []),
     `Delivery: ${delivery}`,
     `Total: ${formatDh(order.totalDh)}`,
     "",

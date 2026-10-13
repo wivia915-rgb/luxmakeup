@@ -1,10 +1,10 @@
 "use client";
 
-import type { CodDrawerProps } from "@/components/cod-drawer";
+import { CodDrawer, type CodDrawerProps } from "@/components/cod-drawer";
 import { pieceCount, type Dictionary } from "@/lib/messages";
 import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
 import { categories, categoryFromHash, hashForCategory, moods, type Category, type Mood } from "@/lib/products";
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const chip =
   "type-nav border px-4 py-3 text-foreground/80 transition-colors hover:border-gold-bright hover:text-gold-bright";
@@ -13,7 +13,6 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
   const [category, setCategory] = useState<Category>("All");
   const [mood, setMood] = useState<Mood>("All");
   const [shown, setShown] = useState(total);
-  const [Drawer, setDrawer] = useState<ComponentType<CodDrawerProps> | null>(null);
   const [line, setLine] = useState<CodDrawerProps["line"] | null>(null);
 
   useEffect(() => {
@@ -59,7 +58,6 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
         detail: `${button.dataset.badge ?? ""} · ×1`,
         merchandise: Number(button.dataset.price ?? 0),
       });
-      void import("@/components/cod-drawer").then((mod) => setDrawer(() => mod.CodDrawer));
     };
 
     section.addEventListener("click", onClick);
@@ -132,7 +130,7 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
         </div>
       ) : null}
 
-      {Drawer && line ? <Drawer open onClose={() => setLine(null)} line={line} shippingRates={shippingRates} copy={copy.checkout} /> : null}
+      {line ? <CodDrawer open onClose={() => setLine(null)} line={line} shippingRates={shippingRates} copy={copy.checkout} /> : null}
     </>
   );
 }
