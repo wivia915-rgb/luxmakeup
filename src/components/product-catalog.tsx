@@ -11,11 +11,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export async function ProductCatalog() {
-  const [copy, settings, stored] = await Promise.all([
-    getLocale().then((locale) => messages[locale]),
-    getStoreSettings(),
-    getStorefrontPieces(),
-  ]);
+  const locale = await getLocale();
+  const [settings, stored] = await Promise.all([getStoreSettings(), getStorefrontPieces(locale)]);
+  const copy = messages[locale];
   const pieces = stored.length > 0 ? stored : products.map(memoryPiece);
 
   return (
@@ -42,7 +40,7 @@ export async function ProductCatalog() {
           >
             <Link
               href={`/product/${product.id}`}
-              className="relative block aspect-[4/5] overflow-hidden bg-[#0D0D0D]"
+              className="relative block aspect-[4/5] overflow-hidden bg-background"
               aria-label={copy.catalog.view.replace("{name}", product.name)}
             >
               <div className="absolute inset-0 origin-center transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-within:scale-[1.04]">
@@ -114,7 +112,7 @@ function GoldBadge({ solid = false, children }: { solid?: boolean; children: Rea
       className={
         solid
           ? "type-caption bg-[#D4AF37] px-2.5 py-1 text-[#0D0D0D]"
-          : "type-caption border border-[#E5C158] bg-[#0D0D0D]/75 px-2.5 py-1 text-[#E5C158] backdrop-blur-sm"
+          : "type-caption border border-[#E5C158] bg-black/65 px-2.5 py-1 text-[#E5C158] backdrop-blur-sm"
       }
     >
       {children}

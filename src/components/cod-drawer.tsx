@@ -13,7 +13,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 const ease = [0.22, 1, 0.36, 1] as const;
 
 const fieldClass =
-  "mt-2 w-full border bg-[#0D0D0D] px-3 py-3 text-[0.95rem] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-[#E5C158]";
+  "mt-2 w-full border bg-background px-3 py-3 text-[0.95rem] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-gold-bright";
 
 type CodLine = {
   productId: string;
@@ -342,7 +342,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                     />
                     <FieldError message={visibleError("city")} />
                     {cityOpen ? (
-                      <ul id={listId} role="listbox" className="absolute z-10 mt-1 max-h-52 w-full overflow-auto border border-gold/30 bg-[#0D0D0D]">
+                      <ul id={listId} role="listbox" className="absolute z-10 mt-1 max-h-52 w-full overflow-auto border border-gold/30 bg-background">
                         {suggestions.length === 0 ? (
                           <li className="type-caption px-3 py-3">{copy.noCity}</li>
                         ) : (
@@ -350,7 +350,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                             <li key={city} id={`${listId}-${index}`} role="option" aria-selected={index === activeIndex}>
                               <button
                                 type="button"
-                                className={`flex w-full items-center justify-between px-3 py-2.5 text-start text-sm ${index === activeIndex ? "bg-[#1A1A1A] text-gold-bright" : "text-foreground"}`}
+                                className={`flex w-full items-center justify-between px-3 py-2.5 text-start text-sm ${index === activeIndex ? "bg-card text-gold-bright" : "text-foreground"}`}
                                 onMouseDown={(event) => event.preventDefault()}
                                 onClick={() => chooseCity(city)}
                               >
@@ -389,7 +389,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                     {coupon ? (
                       <div className="flex items-center justify-between gap-4">
                         <dt className="type-caption">{copy.discount}</dt>
-                        <dd className="type-caption text-[#E5C158]">−{formatDh(coupon.discountDh)}</dd>
+                        <dd className="type-caption text-gold-bright">−{formatDh(coupon.discountDh)}</dd>
                       </div>
                     ) : null}
                     <div className="flex items-center justify-between gap-4">

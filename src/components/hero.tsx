@@ -22,7 +22,7 @@ export async function Hero() {
   const hero = messages[locale].hero;
 
   return (
-    <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#0a0a0a]">
+    <section className="lux-night relative isolate min-h-[100svh] overflow-hidden bg-card">
       <img
         src="/hero/atelier-lipstick.jpg"
         alt=""
@@ -70,7 +70,7 @@ export async function Hero() {
         </h1>
         <a
           href="#edit"
-          className="type-nav pointer-events-auto lux-rise mt-10 inline-flex w-fit items-center gap-3 border border-[#E5C158]/45 bg-[#F8F8F8]/10 px-8 py-4 text-foreground shadow-[inset_0_1px_0_rgba(248,248,248,0.32),0_16px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-colors hover:-translate-y-0.5 hover:border-[#E5C158] hover:bg-[#F8F8F8]/20"
+          className="type-nav pointer-events-auto lux-rise mt-10 inline-flex w-fit items-center gap-3 border border-gold-bright/45 bg-[#F8F8F8]/10 px-8 py-4 text-foreground shadow-[inset_0_1px_0_rgba(248,248,248,0.32),0_16px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-colors hover:-translate-y-0.5 hover:border-gold-bright hover:bg-[#F8F8F8]/20"
           style={{ animationDelay: "0.32s" }}
         >
           {hero.cta}

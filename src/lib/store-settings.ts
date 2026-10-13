@@ -17,6 +17,8 @@ export type StoreSettings = {
   facebookPixelId: string;
   tiktokPixelId: string;
   maintenanceMode: boolean;
+  agentEnabled: boolean;
+  agentPrompt: string;
 };
 
 export type StoreSettingsInput = {
@@ -49,6 +51,8 @@ export const emptyStoreSettings: StoreSettings = {
   facebookPixelId: "",
   tiktokPixelId: "",
   maintenanceMode: false,
+  agentEnabled: true,
+  agentPrompt: "",
 };
 
 const STORE_ID = "store";
@@ -79,6 +83,8 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       facebookPixelId: row.facebookPixelId,
       tiktokPixelId: row.tiktokPixelId,
       maintenanceMode: row.maintenanceMode,
+      agentEnabled: row.agentEnabled,
+      agentPrompt: row.agentPrompt,
     };
   } catch (error) {
     console.error("Store settings could not be loaded", error instanceof Error ? error.name : "unknown");
@@ -88,7 +94,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
 
 export function parseStoreSettings(
   input: StoreSettingsInput,
-): { ok: true; value: Omit<StoreSettings, "connected"> } | { ok: false; error: string } {
+): { ok: true; value: Omit<StoreSettings, "connected" | "agentPrompt" | "agentEnabled"> } | { ok: false; error: string } {
   const announcementAr = cleanBanner(input.announcementAr);
   const announcementFr = cleanBanner(input.announcementFr);
   const announcementEn = cleanBanner(input.announcementEn);
@@ -156,7 +162,7 @@ export function parseStoreSettings(
   };
 }
 
-export async function saveStoreSettingsRow(value: Omit<StoreSettings, "connected">) {
+export async function saveStoreSettingsRow(value: Omit<StoreSettings, "connected" | "agentPrompt" | "agentEnabled">) {
   await prisma.storeSettings.upsert({
     where: { id: STORE_ID },
     create: { id: STORE_ID, ...value },
@@ -168,6 +174,14 @@ function cleanBanner(value: string) {
   const text = value.trim().replace(/\s+/g, " ");
   if (text.length > 180) return null;
   return text;
+}
+
+export async function saveAgentSettingsRow(agentPrompt: string, agentEnabled: boolean) {
+  await prisma.storeSettings.upsert({
+    where: { id: STORE_ID },
+    create: { id: STORE_ID, agentPrompt, agentEnabled },
+    update: { agentPrompt, agentEnabled },
+  });
 }
 
 function wholeDh(value: string, max: number) {

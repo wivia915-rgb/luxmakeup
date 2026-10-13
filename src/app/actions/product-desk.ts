@@ -2,6 +2,7 @@
 
 import { deskCategories, parseProductDraft, type ProductDraft, type VariantWrite } from "@/lib/admin-catalog";
 import { requireDesk } from "@/lib/admin-gate";
+import { pieceHash, translatePiece } from "@/lib/piece-locales";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -15,26 +16,32 @@ export async function createProduct(input: ProductDraft) {
   try {
     const categoryId = await categoryIdFor(parsed.value.category);
     const slug = await uniqueSlug(parsed.value.title);
-    await prisma.product.create({
+    const copy = await localizedCopy(parsed.value.title, parsed.value.description, parsed.value.ingredients);
+    const created = await prisma.product.create({
       data: {
         title: parsed.value.title,
         slug,
         description: parsed.value.description || null,
+        descriptionLocales: copy.descriptionLocales,
+        titleLocales: copy.titleLocales,
+        copyHash: copy.hash,
         price: parsed.value.price,
         stock: parsed.value.stock,
         available: parsed.value.stock > 0,
         images: parsed.value.imageUrls,
+        ingredients: parsed.value.ingredients.map((item) => item.name),
         categoryId,
         variants: { create: variantRows(parsed.value.variants) },
+        formula: { create: ingredientRows(parsed.value.ingredients, copy.ingredientLocales) },
       },
+      select: { slug: true },
     });
+    refreshDesk(created.slug);
+    return { ok: true as const };
   } catch (error) {
     console.error("Product was not created", error instanceof Error ? error.name : "unknown");
     return { ok: false as const, error: "The piece could not be added." };
   }
-
-  refreshDesk();
-  return { ok: true as const };
 }
 
 export async function updateProduct(id: string, input: ProductDraft) {
@@ -47,35 +54,51 @@ export async function updateProduct(id: string, input: ProductDraft) {
   try {
     const current = await prisma.product.findUnique({
       where: { id },
-      select: { available: true, stock: true },
+      select: {
+        available: true,
+        stock: true,
+        slug: true,
+        copyHash: true,
+        descriptionLocales: true,
+        titleLocales: true,
+        formula: { orderBy: { sortOrder: "asc" }, select: { locales: true } },
+      },
     });
     if (!current) return { ok: false as const, error: "This piece is no longer in the catalog." };
 
     const available = parsed.value.stock === 0 ? false : current.stock === 0 ? true : current.available;
     const categoryId = await categoryIdFor(parsed.value.category);
+    const copy = await localizedCopy(parsed.value.title, parsed.value.description, parsed.value.ingredients, current);
     await prisma.product.update({
       where: { id },
       data: {
         title: parsed.value.title,
         description: parsed.value.description || null,
+        descriptionLocales: copy.descriptionLocales,
+        titleLocales: copy.titleLocales,
+        copyHash: copy.hash,
         price: parsed.value.price,
         stock: parsed.value.stock,
         available,
         images: parsed.value.imageUrls,
+        ingredients: parsed.value.ingredients.map((item) => item.name),
         categoryId,
         variants: {
           deleteMany: {},
           create: variantRows(parsed.value.variants),
         },
+        formula: {
+          deleteMany: {},
+          create: ingredientRows(parsed.value.ingredients, copy.ingredientLocales),
+        },
       },
     });
+    refreshDesk(current.slug);
+    return { ok: true as const };
   } catch (error) {
     console.error("Product was not updated", error instanceof Error ? error.name : "unknown");
     return { ok: false as const, error: "The piece could not be updated." };
   }
-
-  refreshDesk();
-  return { ok: true as const };
 }
 
 export async function toggleProductAvailability(id: string) {
@@ -152,6 +175,55 @@ async function uniqueSlug(title: string) {
   return slug;
 }
 
+function ingredientRows(
+  ingredients: { name: string; benefit: string; icon: string }[],
+  locales: Prisma.InputJsonValue[],
+) {
+  return ingredients.map((item, index) => ({
+    name: item.name,
+    benefit: item.benefit,
+    icon: item.icon,
+    sortOrder: index,
+    locales: locales[index] ?? {},
+  }));
+}
+
+async function localizedCopy(
+  title: string,
+  description: string,
+  ingredients: { name: string; benefit: string }[],
+  existing?: { copyHash: string; descriptionLocales: Prisma.JsonValue; titleLocales: Prisma.JsonValue; formula: { locales: Prisma.JsonValue }[] },
+) {
+  const hash = pieceHash(title, description, ingredients);
+  if (
+    existing &&
+    existing.copyHash === hash &&
+    existing.formula.length === ingredients.length &&
+    existing.copyHash !== ""
+  ) {
+    return {
+      hash,
+      descriptionLocales: existing.descriptionLocales as Prisma.InputJsonValue,
+      titleLocales: existing.titleLocales as Prisma.InputJsonValue,
+      ingredientLocales: existing.formula.map((row) => row.locales as Prisma.InputJsonValue),
+    };
+  }
+  try {
+    const translated = await translatePiece({ title, description, ingredients });
+    if (translated) {
+      return {
+        hash,
+        descriptionLocales: translated.description,
+        titleLocales: translated.title,
+        ingredientLocales: translated.ingredients,
+      };
+    }
+  } catch (error) {
+    console.error("Piece copy was not translated", error instanceof Error ? error.name : "unknown");
+  }
+  return { hash: "", descriptionLocales: {}, titleLocales: {}, ingredientLocales: ingredients.map(() => ({})) };
+}
+
 function variantRows(variants: VariantWrite[]) {
   return variants.map((variant, index) => ({
     name: variant.name,
@@ -168,7 +240,9 @@ function isId(id: string) {
   return typeof id === "string" && id.length > 0 && id.length <= 64;
 }
 
-function refreshDesk() {
+function refreshDesk(slug?: string) {
   revalidatePath("/admin/products");
   revalidatePath("/admin");
+  revalidatePath("/");
+  if (slug) revalidatePath(`/product/${slug}`);
 }

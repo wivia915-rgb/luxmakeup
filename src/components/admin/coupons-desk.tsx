@@ -155,7 +155,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
             aria-modal="true"
             aria-labelledby="coupon-form-title"
             onSubmit={save}
-            className="max-h-[90svh] w-full max-w-lg overflow-y-auto border border-gold/30 bg-[#0a0a0a] px-6 py-6"
+            className="max-h-[90svh] w-full max-w-lg overflow-y-auto border border-gold/30 bg-card px-6 py-6"
           >
             <p className="type-eyebrow">{copy.coupons.newCode}</p>
             <h2 id="coupon-form-title" className="mt-3 font-serif text-3xl text-foreground">
@@ -167,7 +167,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
                 <input
                   value={draft.code}
                   onChange={(event) => setDraft({ ...draft, code: event.target.value.toUpperCase() })}
-                  className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm tracking-[0.14em] text-foreground uppercase outline-none focus:border-[#E5C158]"
+                  className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm tracking-[0.14em] text-foreground uppercase outline-none focus:border-gold-bright"
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -176,7 +176,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
                   <select
                     value={draft.discountType}
                     onChange={(event) => setDraft({ ...draft, discountType: event.target.value === "fixed" ? "fixed" : "percent" })}
-                    className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158]"
+                    className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
                   >
                     <option value="percent">{copy.coupons.percent}</option>
                     <option value="fixed">{copy.coupons.fixed}</option>
@@ -188,7 +188,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
                     value={draft.amount}
                     inputMode="numeric"
                     onChange={(event) => setDraft({ ...draft, amount: event.target.value })}
-                    className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+                    className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
                   />
                 </label>
               </div>
@@ -198,7 +198,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
                   type="date"
                   value={draft.validUntil}
                   onChange={(event) => setDraft({ ...draft, validUntil: event.target.value })}
-                  className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158]"
+                  className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
                 />
               </label>
               <label className="flex items-center gap-3">
@@ -239,7 +239,7 @@ function StatusBadge({ coupon }: { coupon: DeskCoupon }) {
   if (!coupon.isActive) {
     return <span className="type-caption inline-flex border border-foreground/25 px-2.5 py-1 text-foreground/55">{copy.disabled}</span>;
   }
-  return <span className="type-caption inline-flex border border-[#E5C158] px-2.5 py-1 text-[#E5C158]">{copy.active}</span>;
+  return <span className="type-caption inline-flex border border-gold-bright px-2.5 py-1 text-gold-bright">{copy.active}</span>;
 }
 
 function discountLabel(coupon: DeskCoupon) {

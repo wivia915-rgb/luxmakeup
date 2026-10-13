@@ -7,7 +7,7 @@ type ProductStillProps = {
 
 export function ProductStill({ motif, name }: ProductStillProps) {
   return (
-    <div className="relative h-full w-full bg-[#0D0D0D]" role="img" aria-label={`${name} product image`}>
+    <div className="relative h-full w-full bg-background" role="img" aria-label={`${name} product image`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(229,193,88,0.28),transparent_58%)]" />
       <div className="absolute inset-x-[22%] top-[10%] bottom-[12%]">
         {motif === "flacon" ? <Flacon /> : null}

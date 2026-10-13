@@ -67,7 +67,7 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
           className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
         >
           <div className="overflow-hidden" {...(open ? {} : { inert: true })}>
-            <ul id={listId} role="listbox" aria-label={label} className="min-w-40 border border-gold/30 bg-[#0a0a0a] shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+            <ul id={listId} role="listbox" aria-label={label} className="min-w-40 border border-gold/30 bg-card shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
               {options.map((option) => {
                 const selected = option.id === locale;
                 return (
@@ -78,7 +78,7 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
                       lang={option.id}
                       aria-selected={selected}
                       onClick={() => choose(option.id)}
-                      className={`type-nav block w-full px-4 py-3 text-start text-[0.68rem] transition-colors ${selected ? "bg-gold/15 text-gold-bright" : "text-foreground/80 hover:bg-[#141414] hover:text-gold-bright"}`}
+                      className={`type-nav block w-full px-4 py-3 text-start text-[0.68rem] transition-colors ${selected ? "bg-gold/15 text-gold-bright" : "text-foreground/80 hover:bg-background hover:text-gold-bright"}`}
                     >
                       {option.name}
                     </button>

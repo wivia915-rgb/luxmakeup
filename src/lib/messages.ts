@@ -3,10 +3,24 @@ import type { Locale } from "@/lib/locale";
 
 export type Dictionary = {
   language: string;
+  themeLight: string;
+  themeDark: string;
   announcement: string;
   nav: { makeup: string; parfums: string; skin: string; maison: string };
   search: string;
   bag: string;
+  tools: {
+    searchPlaceholder: string;
+    searchEmpty: string;
+    bagTitle: string;
+    bagEmpty: string;
+    bagBrowse: string;
+    bagRemove: string;
+    bagOrder: string;
+    bagTotal: string;
+    addToBag: string;
+    added: string;
+  };
   openMenu: string;
   closeMenu: string;
   skip: string;
@@ -21,6 +35,9 @@ export type Dictionary = {
     orderNote: string;
     formula: string;
     ingredients: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    related: string;
   };
   checkout: {
     eyebrow: string;
@@ -80,6 +97,22 @@ export type Dictionary = {
   maisonQuote: string;
   maisonBody: string;
   footer: string;
+  footerRights: string;
+  footerTerms: string;
+  footerUsage: string;
+  footerAbout: string;
+  footerContact: string;
+  footerCategories: string;
+  whatsappFloat: string;
+  agent: {
+    open: string;
+    close: string;
+    title: string;
+    placeholder: string;
+    send: string;
+    sending: string;
+    error: string;
+  };
   badges: Record<string, string>;
   descriptions: Record<string, string>;
 };
@@ -102,10 +135,24 @@ const badgesEn = {
 export const messages: Record<Locale, Dictionary> = {
   en: {
     language: "Language",
+    themeLight: "Light mode",
+    themeDark: "Dark mode",
     announcement: "Private clientele · Complimentary engraving on parfum",
     nav: { makeup: "Makeup", parfums: "Parfums", skin: "Skin Care", maison: "Maison" },
     search: "Search the maison",
-    bag: "Shopping bag, empty",
+    bag: "Shopping bag",
+    tools: {
+      searchPlaceholder: "Search a piece",
+      searchEmpty: "No piece matches.",
+      bagTitle: "Bag",
+      bagEmpty: "The bag is empty.",
+      bagBrowse: "View the collection",
+      bagRemove: "Remove",
+      bagOrder: "Order",
+      bagTotal: "Total",
+      addToBag: "Add to the bag",
+      added: "Added",
+    },
     openMenu: "Open menu",
     closeMenu: "Close menu",
     skip: "Skip to content",
@@ -127,6 +174,9 @@ export const messages: Record<Locale, Dictionary> = {
       orderNote: "Cash on delivery. An advisor confirms the piece before it leaves the atelier.",
       formula: "Formula",
       ingredients: "Key Ingredients & Benefits",
+      previousPhoto: "Previous photo",
+      nextPhoto: "Next photo",
+      related: "Related products",
     },
     checkout: {
       eyebrow: "Cash on delivery",
@@ -212,15 +262,45 @@ export const messages: Record<Locale, Dictionary> = {
     maisonBody:
       "Lux Makeup is an ultra-high-end house of complexion, fragrance, and color. The room stays dark so gold, pigment, and skin can speak.",
     footer: "Makeup, perfume, and beauty. Composed in a dark atelier.",
+    footerRights: "© {year} Lux Makeup. All rights reserved.",
+    footerTerms: "Terms of use",
+    footerUsage: "Usage policy",
+    footerAbout: "About",
+    footerContact: "Contact",
+    footerCategories: "Categories",
+    whatsappFloat: "Message Lux Makeup on WhatsApp",
+    agent: {
+      open: "Ask the atelier",
+      close: "Close the advisor",
+      title: "Atelier",
+      placeholder: "Ask about a piece",
+      send: "Send",
+      sending: "Sending",
+      error: "The atelier could not answer. Try again in a moment.",
+    },
     badges: badgesEn,
     descriptions: {},
   },
   fr: {
     language: "Langue",
+    themeLight: "Mode clair",
+    themeDark: "Mode sombre",
     announcement: "Clientèle privée · Gravure offerte sur le parfum",
     nav: { makeup: "Maquillage", parfums: "Parfums", skin: "Soin", maison: "Maison" },
     search: "Rechercher dans la maison",
-    bag: "Panier, vide",
+    bag: "Panier",
+    tools: {
+      searchPlaceholder: "Rechercher une pièce",
+      searchEmpty: "Aucune pièce.",
+      bagTitle: "Panier",
+      bagEmpty: "Le panier est vide.",
+      bagBrowse: "Voir la collection",
+      bagRemove: "Retirer",
+      bagOrder: "Commander",
+      bagTotal: "Total",
+      addToBag: "Ajouter au panier",
+      added: "Ajouté",
+    },
     openMenu: "Ouvrir le menu",
     closeMenu: "Fermer le menu",
     skip: "Aller au contenu",
@@ -242,6 +322,9 @@ export const messages: Record<Locale, Dictionary> = {
       orderNote: "Paiement à la livraison. Un conseiller confirme la pièce avant qu'elle ne quitte l'atelier.",
       formula: "Formule",
       ingredients: "Ingrédients et bienfaits",
+      previousPhoto: "Photo précédente",
+      nextPhoto: "Photo suivante",
+      related: "Produits associés",
     },
     checkout: {
       eyebrow: "Paiement à la livraison",
@@ -327,6 +410,22 @@ export const messages: Record<Locale, Dictionary> = {
     maisonBody:
       "Lux Makeup est une maison de teint, de parfum et de couleur. La pièce reste sombre pour que l'or, le pigment et la peau parlent.",
     footer: "Maquillage, parfum et beauté. Composé dans un atelier sombre.",
+    footerRights: "© {year} Lux Makeup. Tous droits réservés.",
+    footerTerms: "Conditions d'utilisation",
+    footerUsage: "Politique d'utilisation",
+    footerAbout: "À propos",
+    footerContact: "Contact",
+    footerCategories: "Catégories",
+    whatsappFloat: "Écrire à Lux Makeup sur WhatsApp",
+    agent: {
+      open: "Demander à l'atelier",
+      close: "Fermer le conseiller",
+      title: "Atelier",
+      placeholder: "Demander une pièce",
+      send: "Envoyer",
+      sending: "Envoi",
+      error: "L'atelier n'a pas pu répondre. Réessayez dans un instant.",
+    },
     badges: {
       "Lip lacquer": "Laque lèvres",
       "Eye liner": "Eye-liner",
@@ -358,10 +457,24 @@ export const messages: Record<Locale, Dictionary> = {
   },
   ar: {
     language: "اللغة",
+    themeLight: "الوضع المضيء",
+    themeDark: "الوضع المظلم",
     announcement: "لزبائن الدار · نقش مجاني على العطر",
     nav: { makeup: "مكياج", parfums: "عطور", skin: "عناية", maison: "الدار" },
     search: "ابحث في الدار",
-    bag: "الحقيبة فارغة",
+    bag: "السلة",
+    tools: {
+      searchPlaceholder: "ابحث عن قطعة",
+      searchEmpty: "لا قطعة مطابقة.",
+      bagTitle: "السلة",
+      bagEmpty: "السلة فارغة.",
+      bagBrowse: "شاهد المجموعة",
+      bagRemove: "إزالة",
+      bagOrder: "اطلب",
+      bagTotal: "المجموع",
+      addToBag: "أضف إلى السلة",
+      added: "أُضيفت",
+    },
     openMenu: "افتح القائمة",
     closeMenu: "أغلق القائمة",
     skip: "تخطي إلى المحتوى",
@@ -383,6 +496,9 @@ export const messages: Record<Locale, Dictionary> = {
       orderNote: "الدفع عند الاستلام. يؤكد المستشار القطعة قبل أن تغادر الدار.",
       formula: "التركيبة",
       ingredients: "المكوّنات والفوائد",
+      previousPhoto: "الصورة السابقة",
+      nextPhoto: "الصورة التالية",
+      related: "منتجات مشابهة",
     },
     checkout: {
       eyebrow: "الدفع عند الاستلام",
@@ -467,6 +583,22 @@ export const messages: Record<Locale, Dictionary> = {
     maisonQuote: "نُكمل الوجه كما يُكمل العطّار تركيبته — نغمة دقيقة في كل مرة.",
     maisonBody: "لوكس ميكاب دار للبشرة والعطر واللون. تبقى الغرفة معتمة ليصمت المكان ويتكلم الذهب والصبغة والجلد.",
     footer: "مكياج وعطر وجمال. يُصاغ في مشغل مظلم.",
+    footerRights: "© {year} Lux Makeup. جميع الحقوق محفوظة.",
+    footerTerms: "شروط الاستخدام",
+    footerUsage: "سياسة الاستخدام",
+    footerAbout: "حول",
+    footerContact: "اتصل بنا",
+    footerCategories: "التصنيفات",
+    whatsappFloat: "راسلوا لوكس ميكاب على واتساب",
+    agent: {
+      open: "اسأل الدار",
+      close: "إغلاق المستشار",
+      title: "الدار",
+      placeholder: "اسأل عن قطعة",
+      send: "إرسال",
+      sending: "جارٍ الإرسال",
+      error: "تعذّر على الدار الرد. أعيدوا المحاولة بعد لحظة.",
+    },
     badges: {
       "Lip lacquer": "طلاء شفاه",
       "Eye liner": "كحل سائل",

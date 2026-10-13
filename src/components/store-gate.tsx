@@ -37,7 +37,7 @@ export function StoreGate({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  if (!maintenance || pathname.startsWith("/admin")) return children;
+  if (!maintenance || pathname.startsWith("/admin") || pathname === "/terms" || pathname === "/usage" || pathname === "/about" || pathname === "/contact") return children;
 
   const copy = closedCopy[locale];
   const whatsappUrl = storeWhatsAppUrl(whatsapp);
@@ -50,12 +50,12 @@ export function StoreGate({
       {whatsappUrl || email ? (
         <p className="type-caption mt-8 flex flex-wrap gap-x-5 gap-y-2">
           {whatsappUrl ? (
-            <a href={whatsappUrl} className="text-[#E5C158] hover:text-foreground">
+            <a href={whatsappUrl} className="text-gold-bright hover:text-foreground">
               WhatsApp
             </a>
           ) : null}
           {email ? (
-            <a href={`mailto:${email}`} className="text-[#E5C158] hover:text-foreground">
+            <a href={`mailto:${email}`} className="text-gold-bright hover:text-foreground">
               {email}
             </a>
           ) : null}

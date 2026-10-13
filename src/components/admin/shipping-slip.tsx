@@ -19,7 +19,7 @@ export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: ()
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-4 sm:items-center">
       <style>{printStyles}</style>
       <article
-        className="cod-slip max-h-[90svh] w-full max-w-md overflow-y-auto border border-gold/30 bg-[#0a0a0a] px-6 py-6 text-foreground"
+        className="cod-slip max-h-[90svh] w-full max-w-md overflow-y-auto border border-gold/30 bg-card px-6 py-6 text-foreground"
         role="dialog"
         aria-modal="true"
         aria-labelledby="shipping-slip-title"
@@ -58,7 +58,7 @@ export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: ()
 
         <p className="mt-6 flex items-end justify-between border-t border-gold/30 pt-4">
           <span className="type-eyebrow">{copy.slip.total}</span>
-          <span className="font-serif text-3xl text-[#E5C158]">{formatDh(order.totalAmount)}</span>
+          <span className="font-serif text-3xl text-gold-bright">{formatDh(order.totalAmount)}</span>
         </p>
 
         <div className="cod-slip-actions mt-6 flex flex-wrap gap-3">

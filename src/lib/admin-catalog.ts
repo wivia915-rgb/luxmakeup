@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ingredientIcons, type IngredientIcon } from "@/lib/product-story";
 
 export const deskCategories = [
   { slug: "makeup", name: "Makeup" },
@@ -32,6 +33,7 @@ export type DeskProduct = {
   categoryName: string;
   categorySlug: DeskCategorySlug;
   variants: DeskVariant[];
+  ingredients: DeskIngredient[];
 };
 
 export type VariantDraft = {
@@ -44,6 +46,19 @@ export type VariantDraft = {
   isActive: boolean;
 };
 
+export type IngredientDraft = {
+  clientId: string;
+  name: string;
+  benefit: string;
+  icon: IngredientIcon;
+};
+
+export type DeskIngredient = {
+  name: string;
+  benefit: string;
+  icon: IngredientIcon;
+};
+
 export type ProductDraft = {
   title: string;
   description: string;
@@ -52,6 +67,7 @@ export type ProductDraft = {
   imageUrls: string[];
   stock: string;
   variants: VariantDraft[];
+  ingredients: IngredientDraft[];
 };
 
 export type VariantWrite = {
@@ -63,6 +79,12 @@ export type VariantWrite = {
   isActive: boolean;
 };
 
+export type IngredientWrite = {
+  name: string;
+  benefit: string;
+  icon: IngredientIcon;
+};
+
 export type ProductWrite = {
   title: string;
   description: string;
@@ -71,6 +93,7 @@ export type ProductWrite = {
   imageUrls: string[];
   stock: number;
   variants: VariantWrite[];
+  ingredients: IngredientWrite[];
 };
 
 const emptyDesk = { connected: false as const, products: [] as DeskProduct[] };
@@ -125,13 +148,53 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
 
   const variants = parseVariants(input.variants, price);
   if (!variants.ok) return variants;
+  const ingredients = parseIngredients(input.ingredients);
+  if (!ingredients.ok) return ingredients;
 
   const countedStock = variants.value.length > 0 ? variants.value.reduce((sum, variant) => sum + (variant.isActive ? variant.stock : 0), 0) : stock;
 
   return {
     ok: true,
-    value: { title, description, price, category: category.slug, imageUrls: images.value, stock: countedStock, variants: variants.value },
+    value: {
+      title,
+      description,
+      price,
+      category: category.slug,
+      imageUrls: images.value,
+      stock: countedStock,
+      variants: variants.value,
+      ingredients: ingredients.value,
+    },
   };
+}
+
+function parseIngredients(input: IngredientDraft[] | undefined): { ok: true; value: IngredientWrite[] } | { ok: false; error: string } {
+  if (input === undefined) return { ok: true, value: [] };
+  if (!Array.isArray(input)) return { ok: false, error: "Ingredients could not be read." };
+  if (input.length > 8) return { ok: false, error: "A piece can hold up to 8 ingredients." };
+
+  const seen = new Set<string>();
+  const value: IngredientWrite[] = [];
+  for (const item of input) {
+    const name = String(item?.name ?? "").trim().replace(/\s+/g, " ");
+    const benefit = String(item?.benefit ?? "").trim().replace(/\s+/g, " ");
+    if (!name && !benefit) continue;
+    if (name.length < 1 || name.length > 40) {
+      return { ok: false, error: "An ingredient needs a name of 1 to 40 characters." };
+    }
+    if (benefit.length > 180) {
+      return { ok: false, error: "An ingredient benefit must stay under 180 characters." };
+    }
+    const icon = ingredientIcons.find((mark) => mark === item?.icon);
+    if (!icon) {
+      return { ok: false, error: "An ingredient needs a mark." };
+    }
+    const key = name.toLowerCase();
+    if (seen.has(key)) return { ok: false, error: "Each ingredient can only appear once." };
+    seen.add(key);
+    value.push({ name, benefit, icon });
+  }
+  return { ok: true, value };
 }
 
 function parseVariants(input: VariantDraft[] | undefined, price: number): { ok: true; value: VariantWrite[] } | { ok: false; error: string } {
@@ -260,11 +323,78 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
           priceAdjustment: variant.priceAdjustment,
           isActive: variant.isActive,
         })),
+        ingredients: [],
       })),
     };
   } catch (error) {
     console.error("Product desk could not be loaded", error instanceof Error ? error.name : "unknown");
     return emptyDesk;
+  }
+}
+
+export async function getDeskProduct(id: string): Promise<DeskProduct | null> {
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        price: true,
+        stock: true,
+        available: true,
+        images: true,
+        category: { select: { name: true, slug: true } },
+        variants: {
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            colorCode: true,
+            size: true,
+            stock: true,
+            priceAdjustment: true,
+            isActive: true,
+          },
+        },
+        formula: {
+          orderBy: { sortOrder: "asc" },
+          select: { name: true, benefit: true, icon: true },
+        },
+      },
+    });
+    if (!product) return null;
+    return {
+      id: product.id,
+      slug: product.slug,
+      title: product.title,
+      description: product.description ?? "",
+      price: product.price,
+      stock: product.stock,
+      available: product.available,
+      imageUrl: product.images[0] ?? "",
+      imageUrls: product.images,
+      categoryName: deskCategoryLabel(product.category.slug, product.category.name),
+      categorySlug: deskCategoryValue(product.category.slug),
+      variants: product.variants.map((variant) => ({
+        id: variant.id,
+        name: variant.name,
+        colorCode: variant.colorCode ?? "",
+        size: variant.size ?? "",
+        stock: variant.stock,
+        priceAdjustment: variant.priceAdjustment,
+        isActive: variant.isActive,
+      })),
+      ingredients: product.formula.flatMap((item) => {
+        const icon = ingredientIcons.find((mark) => mark === item.icon);
+        if (!icon) return [];
+        return [{ name: item.name, benefit: item.benefit, icon }];
+      }),
+    };
+  } catch (error) {
+    console.error("Product editor could not be loaded", error instanceof Error ? error.name : "unknown");
+    return null;
   }
 }
 

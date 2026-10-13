@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 
 const fieldClass =
-  "mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]";
+  "mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright";
 
 const tabIds = ["general", "shipping", "marketing"] as const;
 
@@ -59,7 +59,7 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
   }
 
   return (
-    <div className="bg-[#0a0a0a] px-5 py-8 md:px-8 md:py-10">
+    <div className="bg-card px-5 py-8 md:px-8 md:py-10">
       <p className="type-eyebrow">{copy.eyebrow}</p>
       <h1 className="type-headline mt-3">{copy.title}</h1>
       <p className="type-body mt-4 max-w-xl">{copy.lead}</p>
@@ -80,7 +80,7 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
                 role="tab"
                 aria-selected={selected}
                 onClick={() => setTab(id)}
-                className={`type-nav border px-4 py-3 ${selected ? "border-[#E5C158] text-[#E5C158]" : "border-gold/25 text-foreground/70 hover:border-gold/50"}`}
+                className={`type-nav border px-4 py-3 ${selected ? "border-gold-bright text-gold-bright" : "border-gold/25 text-foreground/70 hover:border-gold/50"}`}
               >
                 {label}
               </button>
@@ -88,8 +88,8 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
           })}
         </div>
 
-        <section hidden={tab !== "general"} className="mt-4 border border-gold/25 bg-[#0a0a0a] px-5 py-6 md:px-6">
-          <h2 className="font-serif text-3xl tracking-[-0.03em] text-[#E5C158]">{copy.general}</h2>
+        <section hidden={tab !== "general"} className="mt-4 border border-gold/25 bg-card px-5 py-6 md:px-6">
+          <h2 className="font-serif text-3xl tracking-[-0.03em] text-gold-bright">{copy.general}</h2>
           <p className="type-caption mt-2">{copy.bannerLead}</p>
           <div className="mt-6 grid gap-5">
             <BannerField
@@ -135,8 +135,8 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
           </div>
         </section>
 
-        <section hidden={tab !== "shipping"} className="mt-4 border border-gold/25 bg-[#0a0a0a] px-5 py-6 md:px-6">
-          <h2 className="font-serif text-3xl tracking-[-0.03em] text-[#E5C158]">{copy.shipping}</h2>
+        <section hidden={tab !== "shipping"} className="mt-4 border border-gold/25 bg-card px-5 py-6 md:px-6">
+          <h2 className="font-serif text-3xl tracking-[-0.03em] text-gold-bright">{copy.shipping}</h2>
           <p className="type-caption mt-2">{copy.shippingLead}</p>
           <div className="mt-6 grid gap-5 sm:grid-cols-3">
             <TextField
@@ -176,8 +176,8 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
           </div>
         </section>
 
-        <section hidden={tab !== "marketing"} className="mt-4 border border-gold/25 bg-[#0a0a0a] px-5 py-6 md:px-6">
-          <h2 className="font-serif text-3xl tracking-[-0.03em] text-[#E5C158]">{copy.marketing}</h2>
+        <section hidden={tab !== "marketing"} className="mt-4 border border-gold/25 bg-card px-5 py-6 md:px-6">
+          <h2 className="font-serif text-3xl tracking-[-0.03em] text-gold-bright">{copy.marketing}</h2>
           <p className="type-caption mt-2">{copy.pixelsLead}</p>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <TextField
@@ -201,7 +201,7 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
             {notice}
           </p>
         ) : null}
-        {saved ? <p className="type-caption mt-4 text-[#E5C158]">{copy.saved}</p> : null}
+        {saved ? <p className="type-caption mt-4 text-gold-bright">{copy.saved}</p> : null}
 
         <button
           type="submit"

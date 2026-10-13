@@ -22,10 +22,10 @@ const statusFilterIds = ["ALL", "PENDING", "SHIPPED", "CANCELLED"] as const;
 type StatusFilter = (typeof statusFilterIds)[number];
 
 const badgeClass: Record<OrderStatusValue, string> = {
-  PENDING: "border border-[#E5C158] text-[#E5C158]",
-  CONFIRMED: "border border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#E5C158]",
+  PENDING: "border border-gold-bright text-gold-bright",
+  CONFIRMED: "border border-gold/50 bg-[#D4AF37]/10 text-gold-bright",
   SHIPPED: "bg-[#D4AF37] text-[#0D0D0D]",
-  DELIVERED: "bg-[#F8F8F8] text-[#0D0D0D]",
+  DELIVERED: "bg-foreground text-background",
   CANCELLED: "border border-foreground/25 text-foreground/55",
 };
 
@@ -161,7 +161,7 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={ordersCopy.searchPlaceholder}
-            className="mt-2 w-full border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
+            className="mt-2 w-full border border-gold/30 bg-background px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
           />
         </label>
         <div className="flex flex-wrap gap-2" role="tablist" aria-label={ordersCopy.filter}>
@@ -294,7 +294,7 @@ function WhatsAppLink({ href, name }: { href: string; name: string }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={useAdminCopy().orders.whatsapp.replace("{name}", name)}
-      className="type-caption border border-[#E5C158] bg-[#0a0a0a] px-2.5 py-1.5 text-[#E5C158] hover:bg-gold/10"
+      className="type-caption border border-gold-bright bg-card px-2.5 py-1.5 text-gold-bright hover:bg-gold/10"
     >
       WhatsApp
     </a>
@@ -325,7 +325,7 @@ function StatusField({
         onChange={(event) => {
           if (isOrderStatus(event.target.value)) onChange(event.target.value);
         }}
-        className="w-full border border-gold/30 bg-[#0D0D0D] px-2 py-1.5 text-xs text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158] disabled:opacity-40"
+        className="w-full border border-gold/30 bg-background px-2 py-1.5 text-xs text-foreground outline-none focus:border-gold-bright disabled:opacity-40"
       >
         {options.map((item) => (
           <option key={item} value={item}>

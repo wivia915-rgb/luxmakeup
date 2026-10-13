@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getProductPage } from "@/lib/product-story";
+import { getProductPage, ingredientIcons, type Ingredient } from "@/lib/product-story";
+import { ingredientIn, textIn } from "@/lib/piece-locales";
+import type { Locale } from "@/lib/locale";
 import type { Motif, ProductCategory, ProductMood } from "@/lib/products";
 
 export type StorefrontPieceDetail = StorefrontPiece & {
-  ingredients: string[];
+  ingredients: Ingredient[];
 };
 
 export type StorefrontPiece = {
@@ -22,7 +24,7 @@ export type StorefrontPiece = {
   shadeId: string;
 };
 
-export async function getStorefrontPieces(): Promise<StorefrontPiece[]> {
+export async function getStorefrontPieces(locale: Locale = "en"): Promise<StorefrontPiece[]> {
   try {
     const rows = await prisma.product.findMany({
       where: {
@@ -36,6 +38,8 @@ export async function getStorefrontPieces(): Promise<StorefrontPiece[]> {
         price: true,
         discountPrice: true,
         description: true,
+        descriptionLocales: true,
+        titleLocales: true,
         images: true,
         featured: true,
         category: { select: { name: true, slug: true } },
@@ -50,14 +54,14 @@ export async function getStorefrontPieces(): Promise<StorefrontPiece[]> {
       const offer = payable < row.price;
       return {
         id: row.slug,
-        name: row.title,
+        name: textIn(row.titleLocales, locale, row.title),
         category,
         moods: moodsFor(category, row.title),
         price: payable,
         compareAt: offer ? row.price : null,
         offer,
         badge: row.category.name,
-        description: row.description ?? "",
+        description: textIn(row.descriptionLocales, locale, row.description ?? ""),
         image,
         images,
         motif: motifFor(category),
@@ -70,7 +74,15 @@ export async function getStorefrontPieces(): Promise<StorefrontPiece[]> {
   }
 }
 
-export async function getStorefrontPiece(slug: string): Promise<StorefrontPieceDetail | null> {
+export async function getRelatedPieces(slug: string, category: ProductCategory, locale: Locale = "en") {
+  const pieces = await getStorefrontPieces(locale);
+  const others = pieces.filter((piece) => piece.id !== slug);
+  const same = others.filter((piece) => piece.category === category);
+  const rest = others.filter((piece) => piece.category !== category);
+  return [...same, ...rest].slice(0, 4);
+}
+
+export async function getStorefrontPiece(slug: string, locale: Locale = "en"): Promise<StorefrontPieceDetail | null> {
   try {
     const row = await prisma.product.findFirst({
       where: { slug, available: true },
@@ -80,8 +92,11 @@ export async function getStorefrontPiece(slug: string): Promise<StorefrontPieceD
         price: true,
         discountPrice: true,
         description: true,
+        descriptionLocales: true,
+        titleLocales: true,
         images: true,
         ingredients: true,
+        formula: { orderBy: { sortOrder: "asc" }, select: { name: true, benefit: true, icon: true, locales: true } },
         category: { select: { name: true, slug: true } },
       },
     });
@@ -92,24 +107,41 @@ export async function getStorefrontPiece(slug: string): Promise<StorefrontPieceD
     const payable = row.discountPrice != null && row.discountPrice > 0 && row.discountPrice < row.price ? row.discountPrice : row.price;
     return {
       id: row.slug,
-      name: row.title,
+      name: textIn(row.titleLocales, locale, row.title),
       category,
       moods: moodsFor(category, row.title),
       price: payable,
       compareAt: payable < row.price ? row.price : null,
       offer: payable < row.price,
       badge: row.category.name,
-      description: row.description ?? "",
+      description: textIn(row.descriptionLocales, locale, row.description ?? ""),
       image,
       images,
       motif: motifFor(category),
       shadeId: "atelier",
-      ingredients: row.ingredients,
+      ingredients: formulaOf(row.formula, row.ingredients, locale),
     };
   } catch (error) {
     console.error("Storefront piece could not be loaded", error instanceof Error ? error.name : "unknown");
     return null;
   }
+}
+
+function formulaOf(
+  formula: { name: string; benefit: string; icon: string; locales: unknown }[],
+  names: string[],
+  locale: Locale,
+): Ingredient[] {
+  const source =
+    formula.length > 0
+      ? formula
+      : names.map((name, index) => ({ name, benefit: "", icon: ingredientIcons[index % ingredientIcons.length], locales: {} }));
+  return source.flatMap((item) => {
+    const icon = ingredientIcons.find((mark) => mark === item.icon);
+    if (!item.name || !icon) return [];
+    const translated = ingredientIn(item.locales, locale);
+    return [{ name: translated?.name || item.name, benefit: translated?.benefit || item.benefit, icon }];
+  });
 }
 
 function visibleImages(images: string[]) {

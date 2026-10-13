@@ -28,8 +28,8 @@ export function DeskLock() {
   }
 
   return (
-    <main className="grid min-h-[calc(100svh-5.5rem)] place-items-center bg-[#0a0a0a] px-5 py-16">
-      <form onSubmit={submit} className="w-full max-w-md border border-gold/30 bg-[#0a0a0a] px-6 py-8 sm:px-8">
+    <main className="grid min-h-[calc(100svh-5.5rem)] place-items-center bg-card px-5 py-16">
+      <form onSubmit={submit} className="w-full max-w-md border border-gold/30 bg-card px-6 py-8 sm:px-8">
         <p className="type-eyebrow">{copy.eyebrow}</p>
         <h1 className="mt-3 font-serif text-4xl text-foreground">{copy.title}</h1>
         <p className="mt-3 text-sm leading-6 text-foreground/70">{copy.lead}</p>
@@ -42,7 +42,7 @@ export function DeskLock() {
             autoFocus
             value={code}
             onChange={(event) => setCode(event.target.value)}
-            className="mt-2 w-full border border-gold/30 bg-black px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+            className="mt-2 w-full border border-gold/30 bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
           />
         </label>
         {notice ? (

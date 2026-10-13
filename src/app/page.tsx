@@ -20,16 +20,6 @@ export default async function Home() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-gold/20 px-5 py-10 md:px-10 md:py-14">
-        <hr className="rule-gold mb-10" />
-        <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          <p className="font-serif text-3xl tracking-[0.16em] text-foreground uppercase">Lux Makeup</p>
-          <p className="type-caption max-w-xs">
-            {copy.footer}
-          </p>
-        </div>
-      </footer>
     </>
   );
 }

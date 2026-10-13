@@ -65,7 +65,7 @@ export function CouponField({
           placeholder={copy.couponPlaceholder}
           autoComplete="off"
           spellCheck={false}
-          className="min-w-0 flex-1 border border-gold/30 bg-[#0D0D0D] px-3 py-3 text-sm tracking-[0.12em] text-foreground uppercase outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-foreground/35 focus:border-[#E5C158]"
+          className="min-w-0 flex-1 border border-gold/30 bg-background px-3 py-3 text-sm tracking-[0.12em] text-foreground uppercase outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-foreground/35 focus:border-gold-bright"
         />
         <button
           type="button"
@@ -77,11 +77,11 @@ export function CouponField({
         </button>
       </div>
       {applied ? (
-        <p className="mt-2 flex items-center justify-between gap-3 text-xs tracking-wide text-[#E5C158]">
+        <p className="mt-2 flex items-center justify-between gap-3 text-xs tracking-wide text-gold-bright">
           <span>
             {applied.code} · −{formatDh(applied.discountDh)}
           </span>
-          <button type="button" onClick={() => onApplied(null)} className="text-foreground/60 hover:text-[#E5C158]">
+          <button type="button" onClick={() => onApplied(null)} className="text-foreground/60 hover:text-gold-bright">
             {copy.remove}
           </button>
         </p>

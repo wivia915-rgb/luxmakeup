@@ -6,7 +6,9 @@ export type Shade = {
   swatch: string;
 };
 
-export type IngredientIcon = "droplet" | "spark" | "leaf" | "sun" | "gem" | "flower";
+export const ingredientIcons = ["droplet", "spark", "leaf", "sun", "gem", "flower"] as const;
+
+export type IngredientIcon = (typeof ingredientIcons)[number];
 
 export type Ingredient = {
   name: string;

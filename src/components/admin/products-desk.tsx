@@ -1,11 +1,13 @@
 "use client";
 
+import { generateProductCopy } from "@/app/actions/generate-product-copy";
 import { generateLifestyleImage } from "@/app/actions/generate-lifestyle";
 import { createProduct, deleteProduct, toggleProductAvailability, updateProduct } from "@/app/actions/product-desk";
 import { uploadProductImage } from "@/app/actions/upload-images";
 import { useAdminCopy, useDeskError } from "@/components/admin/admin-locale";
 import { fillCount } from "@/lib/admin-copy";
-import { deskCategories, type DeskProduct, type DeskVariant, type ProductDraft, type VariantDraft } from "@/lib/admin-catalog";
+import { deskCategories, type DeskProduct, type DeskVariant, type IngredientDraft, type ProductDraft, type VariantDraft } from "@/lib/admin-catalog";
+import { ingredientIcons } from "@/lib/product-story";
 import { type LifestylePerson } from "@/lib/lifestyle-image";
 import { formatDh } from "@/lib/products";
 import Link from "next/link";
@@ -20,6 +22,7 @@ const emptyDraft: ProductDraft = {
   imageUrls: [],
   stock: "0",
   variants: [],
+  ingredients: [],
 };
 
 function blankVariant(stock = "0"): VariantDraft {
@@ -38,14 +41,12 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
   const router = useRouter();
   const copy = useAdminCopy().products;
   const explain = useDeskError();
-  const [draft, setDraft] = useState<ProductDraft | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<DeskProduct | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [stocks, setStocks] = useState<Record<string, number>>({});
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     setAvailability((current) => pruneMatched(current, products, (product, value) => product.available === value));
@@ -70,57 +71,6 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
       available: availability[product.id] ?? product.available,
       stock: stocks[product.id] ?? product.stock,
     }));
-
-  function openCreate() {
-    setNotice(null);
-    setEditingId(null);
-    setDraft(emptyDraft);
-  }
-
-  function openEdit(product: DeskProduct) {
-    setNotice(null);
-    setConfirm(null);
-    setEditingId(product.id);
-    setDraft({
-      title: product.title,
-      description: product.description,
-      price: String(product.price),
-      category: product.categorySlug,
-      imageUrls: product.imageUrls,
-      stock: String(product.stock),
-      variants: product.variants.map((variant) => ({
-        clientId: variant.id,
-        name: variant.name,
-        colorCode: variant.colorCode,
-        size: variant.size,
-        stock: String(variant.stock),
-        priceAdjustment: String(variant.priceAdjustment),
-        isActive: variant.isActive,
-      })),
-    });
-  }
-
-  function closeForm() {
-    if (isPending) return;
-    setDraft(null);
-    setEditingId(null);
-  }
-
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draft) return;
-    setNotice(null);
-    startTransition(async () => {
-      const result = editingId ? await updateProduct(editingId, draft) : await createProduct(draft);
-      if (!result.ok) {
-        setNotice(explain(result.error));
-        return;
-      }
-      setDraft(null);
-      setEditingId(null);
-      router.refresh();
-    });
-  }
 
   function toggle(product: DeskProduct) {
     const previous = { available: product.available, stock: product.stock };
@@ -169,20 +119,19 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
           <p className="type-eyebrow">{copy.eyebrow}</p>
           <h1 className="type-headline mt-3">{copy.title}</h1>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
+        <Link
+          href="/admin/products/new"
           className="type-nav border border-gold-bright px-4 py-3 text-gold-bright transition-colors hover:bg-gold/10"
         >
           {copy.add}
-        </button>
+        </Link>
       </div>
 
       {!connected ? (
         <p className="type-body mt-6 max-w-xl">{copy.waiting}</p>
       ) : null}
 
-      {notice && !draft ? (
+      {notice ? (
         <p className="mt-4 text-xs tracking-wide text-[#E7B4A8]" role="alert">
           {notice}
         </p>
@@ -207,7 +156,7 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
                   </div>
                 </div>
               </div>
-              <RowActions product={product} onEdit={() => openEdit(product)} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
+              <RowActions product={product} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
             </article>
           ))
         )}
@@ -246,7 +195,7 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
                     <VariantStock product={product} />
                   </td>
                   <td className="px-4 py-4">
-                    <RowActions product={product} onEdit={() => openEdit(product)} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
+                    <RowActions product={product} onToggle={() => toggle(product)} onAskDelete={() => setConfirm(product)} />
                   </td>
                 </tr>
               ))
@@ -255,21 +204,9 @@ export function ProductsDesk({ connected, products }: { connected: boolean; prod
         </table>
       </div>
 
-      {draft ? (
-        <ProductForm
-          draft={draft}
-          editing={Boolean(editingId)}
-          busy={isPending}
-          notice={notice}
-          onChange={setDraft}
-          onClose={closeForm}
-          onSubmit={save}
-        />
-      ) : null}
-
       {confirm ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-4 sm:items-center">
-          <div role="dialog" aria-modal="true" aria-labelledby="delete-product-title" className="w-full max-w-md border border-gold/30 bg-[#0D0D0D] px-6 py-6">
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-product-title" className="w-full max-w-md border border-gold/30 bg-background px-6 py-6">
             <p className="type-eyebrow">{copy.remove}</p>
             <h2 id="delete-product-title" className="mt-3 font-serif text-3xl text-foreground">
               {confirm.title}
@@ -452,7 +389,7 @@ function ImageList({
           value={link}
           onChange={(event) => setLink(event.target.value)}
           placeholder="https://"
-          className="min-w-0 flex-1 border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+          className="min-w-0 flex-1 border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
         />
         <button type="button" onClick={addLink} disabled={urls.length >= imageCap} className="type-nav border border-gold/40 px-3 py-3 text-foreground/80 disabled:opacity-40">
           {addLinkLabel}
@@ -466,16 +403,16 @@ function ImageList({
       {urls.length > 0 ? (
         <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {urls.map((url) => (
-            <li key={url} className="border border-gold/25 bg-[#0D0D0D]">
+            <li key={url} className="border border-gold/25 bg-background">
               <img src={url} alt="" className="aspect-square w-full object-cover" />
-              <button type="button" onClick={() => onChange(urls.filter((item) => item !== url))} className="type-caption w-full px-2 py-1.5 text-foreground/70 hover:text-[#E5C158]">
+              <button type="button" onClick={() => onChange(urls.filter((item) => item !== url))} className="type-caption w-full px-2 py-1.5 text-foreground/70 hover:text-gold-bright">
                 {removeLabel}
               </button>
             </li>
           ))}
         </ul>
       ) : null}
-      <section className="mt-6 border border-gold/25 bg-[#0a0a0a] p-4">
+      <section className="mt-6 border border-gold/25 bg-card p-4">
         <p className="type-eyebrow">{aiTitle}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {urls.length === 0 ? (
@@ -487,7 +424,7 @@ function ImageList({
                 type="button"
                 onClick={() => setBaseUrl(url)}
                 aria-pressed={url === baseUrl}
-                className={`size-16 overflow-hidden border ${url === baseUrl ? "border-[#E5C158]" : "border-gold/25"}`}
+                className={`size-16 overflow-hidden border ${url === baseUrl ? "border-gold-bright" : "border-gold/25"}`}
               >
                 <img src={url} alt="" className="size-full object-cover" />
               </button>
@@ -522,14 +459,14 @@ function ImageList({
             onChange={(event) => setScene(event.target.value)}
             placeholder={aiPlaceholder}
             rows={3}
-            className="mt-2 w-full resize-y border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
+            className="mt-2 w-full resize-y border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
           />
         </label>
         <button type="button" onClick={() => void prepareLifestyle()} disabled={!baseUrl || generating || urls.length >= imageCap} className="type-nav mt-4 border border-gold-bright px-4 py-3 text-gold-bright disabled:opacity-40">
           {generating ? aiGenerating : aiGenerate}
         </button>
         {aiNote ? (
-          <p className={`mt-2 text-xs tracking-wide ${aiNote === aiReady ? "text-[#E5C158]" : "text-[#E7B4A8]"}`} role={aiNote === aiReady ? "status" : "alert"}>
+          <p className={`mt-2 text-xs tracking-wide ${aiNote === aiReady ? "text-gold-bright" : "text-[#E7B4A8]"}`} role={aiNote === aiReady ? "status" : "alert"}>
             {aiNote}
           </p>
         ) : null}
@@ -580,7 +517,7 @@ function Thumbnail({ title, imageUrl, large = false }: { title: string; imageUrl
   }, [imageUrl]);
 
   return (
-    <div className={`${large ? "h-28 w-full" : "size-14"} shrink-0 overflow-hidden border border-gold/25 bg-[#0D0D0D]`}>
+    <div className={`${large ? "h-28 w-full" : "size-14"} shrink-0 overflow-hidden border border-gold/25 bg-background`}>
       {imageUrl && !broken ? (
         <img src={imageUrl} alt="" className="size-full object-cover" onError={() => setBroken(true)} />
       ) : (
@@ -593,7 +530,7 @@ function Thumbnail({ title, imageUrl, large = false }: { title: string; imageUrl
 function PieceMark({ title }: { title: string }) {
   const mark = title.trim().slice(0, 1).toUpperCase() || "L";
   return (
-    <span className="grid size-full place-items-center bg-[#0D0D0D]">
+    <span className="grid size-full place-items-center bg-background">
       <span className="grid size-8 place-items-center rounded-full border border-gold/50 font-serif text-sm text-gold">{mark}</span>
     </span>
   );
@@ -630,10 +567,10 @@ function VariantStock({ product }: { product: DeskProduct }) {
                 ) : null}
                 <span className="type-caption truncate text-foreground">
                   {variantLabel(variant)}
-                  {variant.priceAdjustment !== 0 ? <span className="text-[#E5C158]"> {signedAdjustment(variant.priceAdjustment)}</span> : null}
+                  {variant.priceAdjustment !== 0 ? <span className="text-gold-bright"> {signedAdjustment(variant.priceAdjustment)}</span> : null}
                 </span>
               </span>
-              <span className="type-caption shrink-0 text-[#E5C158]">{fillCount(copy.inStock, variant.stock)}</span>
+              <span className="type-caption shrink-0 text-gold-bright">{fillCount(copy.inStock, variant.stock)}</span>
             </li>
           ))}
         </ul>
@@ -654,7 +591,7 @@ function StockBadge({ product }: { product: DeskProduct }) {
       : fillCount(copy.inStock, product.stock);
   return (
     <span
-      className={`type-caption inline-flex px-2.5 py-1 ${inStock ? "border border-[#E5C158] text-[#E5C158]" : "border border-foreground/25 text-foreground/55"}`}
+      className={`type-caption inline-flex px-2.5 py-1 ${inStock ? "border border-gold-bright text-gold-bright" : "border border-foreground/25 text-foreground/55"}`}
     >
       {label}
     </span>
@@ -663,12 +600,10 @@ function StockBadge({ product }: { product: DeskProduct }) {
 
 function RowActions({
   product,
-  onEdit,
   onToggle,
   onAskDelete,
 }: {
   product: DeskProduct;
-  onEdit: () => void;
   onToggle: () => void;
   onAskDelete: () => void;
 }) {
@@ -679,13 +614,13 @@ function RowActions({
         href={`/product/${product.slug}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="type-caption border border-[#E5C158] px-2.5 py-1.5 text-[#E5C158] hover:bg-gold/10"
+        className="type-caption border border-gold-bright px-2.5 py-1.5 text-gold-bright hover:bg-gold/10"
       >
         {copy.preview}
       </Link>
-      <button type="button" onClick={onEdit} className="type-caption border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright">
+      <Link href={`/admin/products/${product.id}`} className="type-caption border border-gold/30 px-2.5 py-1.5 text-foreground hover:border-gold-bright hover:text-gold-bright">
         {copy.edit}
-      </button>
+      </Link>
       <button
         type="button"
         onClick={onToggle}
@@ -698,6 +633,66 @@ function RowActions({
       </button>
     </div>
   );
+}
+
+export function ProductEditor({ product }: { product: DeskProduct | null }) {
+  const router = useRouter();
+  const explain = useDeskError();
+  const [draft, setDraft] = useState<ProductDraft>(() => (product ? draftFrom(product) : emptyDraft));
+  const [notice, setNotice] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNotice(null);
+    startTransition(async () => {
+      const result = product ? await updateProduct(product.id, draft) : await createProduct(draft);
+      if (!result.ok) {
+        setNotice(explain(result.error));
+        return;
+      }
+      router.push("/admin/products");
+      router.refresh();
+    });
+  }
+
+  return (
+    <ProductForm
+      draft={draft}
+      editing={Boolean(product)}
+      busy={isPending}
+      notice={notice}
+      onChange={setDraft}
+      onClose={() => router.push("/admin/products")}
+      onSubmit={save}
+    />
+  );
+}
+
+function draftFrom(product: DeskProduct): ProductDraft {
+  return {
+    title: product.title,
+    description: product.description,
+    price: String(product.price),
+    category: product.categorySlug,
+    imageUrls: product.imageUrls,
+    stock: String(product.stock),
+    variants: product.variants.map((variant) => ({
+      clientId: variant.id,
+      name: variant.name,
+      colorCode: variant.colorCode,
+      size: variant.size,
+      stock: String(variant.stock),
+      priceAdjustment: String(variant.priceAdjustment),
+      isActive: variant.isActive,
+    })),
+    ingredients: product.ingredients.map((item) => ({
+      clientId: crypto.randomUUID(),
+      name: item.name,
+      benefit: item.benefit,
+      icon: item.icon,
+    })),
+  };
 }
 
 function ProductForm({
@@ -713,38 +708,55 @@ function ProductForm({
   editing: boolean;
   busy: boolean;
   notice: string | null;
-  onChange: Dispatch<SetStateAction<ProductDraft | null>>;
+  onChange: Dispatch<SetStateAction<ProductDraft>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const copy = useAdminCopy().products;
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const explain = useDeskError();
+  const [writing, setWriting] = useState(false);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
 
   function setField(field: "title" | "description" | "price" | "category" | "stock", value: string) {
     onChange((current) => (current ? { ...current, [field]: value } : current));
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-4 sm:items-center">
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="product-form-title"
-        onSubmit={onSubmit}
-        className="max-h-[90svh] w-full max-w-xl overflow-y-auto border border-gold/30 bg-[#0a0a0a] px-6 py-6"
-      >
-        <p className="type-eyebrow">{editing ? copy.editing : copy.creating}</p>
-        <h2 id="product-form-title" className="mt-3 font-serif text-3xl text-foreground">
-          {editing ? draft.title || copy.piece : copy.addTitle}
-        </h2>
+  async function writeCopy() {
+    if (draft.title.trim().length < 2) {
+      setCopyNote(copy.copyNeedTitle);
+      return;
+    }
+    setWriting(true);
+    setCopyNote(null);
+    const result = await generateProductCopy({ title: draft.title, category: draft.category });
+    setWriting(false);
+    if (!result.ok) {
+      setCopyNote(explain(result.error));
+      return;
+    }
+    onChange((current) =>
+      current
+        ? {
+            ...current,
+            description: result.description,
+            ingredients: result.ingredients.map((item) => ({ ...item, clientId: crypto.randomUUID() })),
+          }
+        : current,
+    );
+    setCopyNote(copy.copyReady);
+  }
 
-        <div className="mt-6 grid gap-4">
+  return (
+    <form onSubmit={onSubmit} className="px-5 py-8 md:px-8 md:py-10">
+      <Link href="/admin/products" className="type-nav text-gold-bright">
+        {copy.back}
+      </Link>
+      <p className="type-eyebrow mt-6">{editing ? copy.editing : copy.creating}</p>
+      <h1 id="product-form-title" className="type-headline mt-3">
+        {editing ? draft.title || copy.piece : copy.addTitle}
+      </h1>
+
+      <div className="mt-8 grid max-w-3xl gap-4">
           <Field label={copy.titleField} value={draft.title} onChange={(value) => setField("title", value)} />
           <label className="block">
             <span className="type-eyebrow">{copy.description}</span>
@@ -752,9 +764,24 @@ function ProductForm({
               value={draft.description}
               onChange={(event) => setField("description", event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-y border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none focus:border-[#E5C158]"
+              className="mt-2 w-full resize-y border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
             />
           </label>
+          <div>
+            <button
+              type="button"
+              onClick={() => void writeCopy()}
+              disabled={writing || busy}
+              className="type-nav border border-gold-bright px-4 py-3 text-gold-bright disabled:opacity-40"
+            >
+              {writing ? copy.copyGenerating : copy.copyGenerate}
+            </button>
+            {copyNote ? (
+              <p className={`mt-2 text-xs tracking-wide ${copyNote === copy.copyReady ? "text-gold-bright" : "text-[#E7B4A8]"}`} role={copyNote === copy.copyReady ? "status" : "alert"}>
+                {copyNote}
+              </p>
+            ) : null}
+          </div>
           <div className={draft.variants.length === 0 ? "grid gap-4 sm:grid-cols-2" : ""}>
             <Field label={copy.priceField} value={draft.price} inputMode="numeric" onChange={(value) => setField("price", value)} />
             {draft.variants.length === 0 ? (
@@ -762,12 +789,13 @@ function ProductForm({
             ) : null}
           </div>
           <VariantEditor variants={draft.variants} onChange={onChange} />
+          <IngredientEditor ingredients={draft.ingredients} onChange={onChange} />
           <label className="block">
             <span className="type-eyebrow">{copy.category}</span>
             <select
               value={draft.category}
               onChange={(event) => setField("category", event.target.value)}
-              className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none [color-scheme:dark] focus:border-[#E5C158]"
+              className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
             >
               {deskCategories.map((category) => (
                 <option key={category.slug} value={category.slug}>
@@ -814,8 +842,87 @@ function ProductForm({
             {copy.cancel}
           </button>
         </div>
-      </form>
-    </div>
+    </form>
+  );
+}
+
+function IngredientEditor({
+  ingredients,
+  onChange,
+}: {
+  ingredients: IngredientDraft[];
+  onChange: Dispatch<SetStateAction<ProductDraft>>;
+}) {
+  const copy = useAdminCopy().products;
+
+  function change(update: (items: IngredientDraft[]) => IngredientDraft[]) {
+    onChange((current) => (current ? { ...current, ingredients: update(current.ingredients) } : current));
+  }
+
+  return (
+    <fieldset className="border border-gold/25 px-4 py-4">
+      <legend className="type-eyebrow px-2">{copy.formula}</legend>
+      <p className="type-caption">{copy.formulaLead}</p>
+      <div className="mt-4 space-y-3">
+        {ingredients.map((item, index) => (
+          <div key={item.clientId} className="border border-gold/20 px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="type-caption text-gold-bright">{fillCount(copy.ingredient, index + 1)}</span>
+              <button
+                type="button"
+                onClick={() => change((items) => items.filter((entry) => entry.clientId !== item.clientId))}
+                className="type-caption text-foreground/70 hover:text-[#E7B4A8]"
+              >
+                {copy.removeVariant}
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3">
+              <Field label={copy.ingredientName} value={item.name} placeholder="Damask Rose" onChange={(value) => change((items) => items.map((entry) => (entry.clientId === item.clientId ? { ...entry, name: value } : entry)))} />
+              <label className="block">
+                <span className="type-eyebrow">{copy.benefit}</span>
+                <textarea
+                  value={item.benefit}
+                  onChange={(event) => change((items) => items.map((entry) => (entry.clientId === item.clientId ? { ...entry, benefit: event.target.value } : entry)))}
+                  rows={2}
+                  className="mt-2 w-full resize-y border border-gold/30 bg-background px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
+                />
+              </label>
+              <label className="block">
+                <span className="type-eyebrow">{copy.icon}</span>
+                <select
+                  value={item.icon}
+                  onChange={(event) => {
+                    const icon = ingredientIcons.find((mark) => mark === event.target.value);
+                    if (!icon) return;
+                    change((items) => items.map((entry) => (entry.clientId === item.clientId ? { ...entry, icon } : entry)));
+                  }}
+                  className="mt-2 w-full border border-gold/30 bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
+                >
+                  {ingredientIcons.map((icon) => (
+                    <option key={icon} value={icon}>
+                      {copy.marks[icon]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        disabled={ingredients.length >= 8}
+        onClick={() =>
+          change((items) => [
+            ...items,
+            { clientId: crypto.randomUUID(), name: "", benefit: "", icon: ingredientIcons[items.length % ingredientIcons.length] },
+          ])
+        }
+        className="type-nav mt-4 border border-gold/40 px-4 py-3 text-gold-bright disabled:opacity-40"
+      >
+        {copy.addIngredient}
+      </button>
+    </fieldset>
   );
 }
 
@@ -824,7 +931,7 @@ function VariantEditor({
   onChange,
 }: {
   variants: VariantDraft[];
-  onChange: Dispatch<SetStateAction<ProductDraft | null>>;
+  onChange: Dispatch<SetStateAction<ProductDraft>>;
 }) {
   const copy = useAdminCopy().products;
   function changeVariants(update: (variants: VariantDraft[], stock: string) => VariantDraft[]) {
@@ -843,7 +950,7 @@ function VariantEditor({
         {variants.map((variant, index) => (
           <div key={variant.clientId} className="border border-gold/20 px-3 py-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="type-caption text-[#E5C158]">{fillCount(copy.variant, index + 1)}</span>
+              <span className="type-caption text-gold-bright">{fillCount(copy.variant, index + 1)}</span>
               <button
                 type="button"
                 onClick={() => changeVariants((items) => items.filter((item) => item.clientId !== variant.clientId))}
@@ -922,7 +1029,7 @@ function Field({
         inputMode={inputMode}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
+        className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
       />
     </label>
   );
