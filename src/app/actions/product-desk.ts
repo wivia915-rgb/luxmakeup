@@ -1,11 +1,14 @@
 "use server";
 
 import { deskCategories, parseProductDraft, type ProductDraft, type VariantWrite } from "@/lib/admin-catalog";
+import { requireDesk } from "@/lib/admin-gate";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function createProduct(input: ProductDraft) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   const parsed = parseProductDraft(input);
   if (!parsed.ok) return parsed;
 
@@ -35,6 +38,8 @@ export async function createProduct(input: ProductDraft) {
 }
 
 export async function updateProduct(id: string, input: ProductDraft) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   if (!isId(id)) return { ok: false as const, error: "Unknown piece." };
   const parsed = parseProductDraft(input);
   if (!parsed.ok) return parsed;
@@ -74,6 +79,8 @@ export async function updateProduct(id: string, input: ProductDraft) {
 }
 
 export async function toggleProductAvailability(id: string) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   if (!isId(id)) return { ok: false as const, error: "Unknown piece." };
 
   try {
@@ -98,6 +105,8 @@ export async function toggleProductAvailability(id: string) {
 }
 
 export async function deleteProduct(id: string) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   if (!isId(id)) return { ok: false as const, error: "Unknown piece." };
 
   try {

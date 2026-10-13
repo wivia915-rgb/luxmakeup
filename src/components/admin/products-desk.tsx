@@ -1,14 +1,16 @@
 "use client";
 
+import { generateLifestyleImage } from "@/app/actions/generate-lifestyle";
 import { createProduct, deleteProduct, toggleProductAvailability, updateProduct } from "@/app/actions/product-desk";
 import { uploadProductImage } from "@/app/actions/upload-images";
 import { useAdminCopy, useDeskError } from "@/components/admin/admin-locale";
 import { fillCount } from "@/lib/admin-copy";
 import { deskCategories, type DeskProduct, type DeskVariant, type ProductDraft, type VariantDraft } from "@/lib/admin-catalog";
+import { type LifestylePerson } from "@/lib/lifestyle-image";
 import { formatDh } from "@/lib/products";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type Dispatch, type FormEvent, type SetStateAction } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type Dispatch, type FormEvent, type SetStateAction } from "react";
 
 const emptyDraft: ProductDraft = {
   title: "",
@@ -313,6 +315,15 @@ function ImageList({
   addLinkLabel,
   removeLabel,
   uploadingLabel,
+  aiTitle,
+  aiWoman,
+  aiMan,
+  aiScene,
+  aiPlaceholder,
+  aiGenerate,
+  aiGenerating,
+  aiNeedImage,
+  aiReady,
   urls,
   onChange,
 }: {
@@ -321,14 +332,34 @@ function ImageList({
   addLinkLabel: string;
   removeLabel: string;
   uploadingLabel: string;
+  aiTitle: string;
+  aiWoman: string;
+  aiMan: string;
+  aiScene: string;
+  aiPlaceholder: string;
+  aiGenerate: string;
+  aiGenerating: string;
+  aiNeedImage: string;
+  aiReady: string;
   urls: string[];
   onChange: (urls: string[]) => void;
 }) {
   const explain = useDeskError();
+  const personGroup = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [link, setLink] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [baseUrl, setBaseUrl] = useState("");
+  const [person, setPerson] = useState<LifestylePerson>("woman");
+  const [scene, setScene] = useState("");
+  const [aiNote, setAiNote] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    if (urls.includes(baseUrl)) return;
+    setBaseUrl(urls[0] ?? "");
+  }, [baseUrl, urls]);
 
   async function onFiles(list: FileList | null) {
     const files = Array.from(list ?? []);
@@ -381,6 +412,27 @@ function ImageList({
     if (!urls.includes(url)) onChange([...urls, url]);
   }
 
+  async function prepareLifestyle() {
+    if (!baseUrl) {
+      setAiNote(aiNeedImage);
+      return;
+    }
+    if (urls.length >= imageCap) {
+      setAiNote(explain("A piece can hold up to 8 images."));
+      return;
+    }
+    setGenerating(true);
+    setAiNote(null);
+    const result = await generateLifestyleImage({ imageUrl: baseUrl, person, scene });
+    setGenerating(false);
+    if (!result.ok) {
+      setAiNote(explain(result.error));
+      return;
+    }
+    if (!urls.includes(result.url)) onChange([...urls, result.url]);
+    setAiNote(aiReady);
+  }
+
   return (
     <div>
       <span className="type-eyebrow">{label}</span>
@@ -423,6 +475,65 @@ function ImageList({
           ))}
         </ul>
       ) : null}
+      <section className="mt-6 border border-gold/25 bg-[#0a0a0a] p-4">
+        <p className="type-eyebrow">{aiTitle}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {urls.length === 0 ? (
+            <p className="text-xs tracking-wide text-foreground/55">{aiNeedImage}</p>
+          ) : (
+            urls.map((url) => (
+              <button
+                key={url}
+                type="button"
+                onClick={() => setBaseUrl(url)}
+                aria-pressed={url === baseUrl}
+                className={`size-16 overflow-hidden border ${url === baseUrl ? "border-[#E5C158]" : "border-gold/25"}`}
+              >
+                <img src={url} alt="" className="size-full object-cover" />
+              </button>
+            ))
+          )}
+        </div>
+        <fieldset className="mt-4 flex gap-5">
+          <legend className="sr-only">{aiTitle}</legend>
+          {(
+            [
+              ["woman", aiWoman],
+              ["man", aiMan],
+            ] as const
+          ).map(([value, caption]) => (
+            <label key={value} className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="radio"
+                name={personGroup}
+                value={value}
+                checked={person === value}
+                onChange={() => setPerson(value)}
+                className="accent-[#E5C158]"
+              />
+              {caption}
+            </label>
+          ))}
+        </fieldset>
+        <label className="mt-4 block">
+          <span className="type-eyebrow">{aiScene}</span>
+          <textarea
+            value={scene}
+            onChange={(event) => setScene(event.target.value)}
+            placeholder={aiPlaceholder}
+            rows={3}
+            className="mt-2 w-full resize-y border border-gold/30 bg-[#0a0a0a] px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-[#E5C158]"
+          />
+        </label>
+        <button type="button" onClick={() => void prepareLifestyle()} disabled={!baseUrl || generating || urls.length >= imageCap} className="type-nav mt-4 border border-gold-bright px-4 py-3 text-gold-bright disabled:opacity-40">
+          {generating ? aiGenerating : aiGenerate}
+        </button>
+        {aiNote ? (
+          <p className={`mt-2 text-xs tracking-wide ${aiNote === aiReady ? "text-[#E5C158]" : "text-[#E7B4A8]"}`} role={aiNote === aiReady ? "status" : "alert"}>
+            {aiNote}
+          </p>
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -671,6 +782,15 @@ function ProductForm({
             addLinkLabel={copy.addLink}
             removeLabel={copy.removeImage}
             uploadingLabel={copy.uploading}
+            aiTitle={copy.aiTitle}
+            aiWoman={copy.aiWoman}
+            aiMan={copy.aiMan}
+            aiScene={copy.aiScene}
+            aiPlaceholder={copy.aiPlaceholder}
+            aiGenerate={copy.aiGenerate}
+            aiGenerating={copy.aiGenerating}
+            aiNeedImage={copy.aiNeedImage}
+            aiReady={copy.aiReady}
             urls={draft.imageUrls}
             onChange={(imageUrls) => onChange((current) => (current ? { ...current, imageUrls } : current))}
           />

@@ -1,5 +1,6 @@
 import { CouponsDesk } from "@/components/admin/coupons-desk";
 import { getCouponDesk } from "@/lib/admin-coupons";
+import { deskIsOpen } from "@/lib/admin-gate";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminCouponsPage() {
+  if (!(await deskIsOpen())) return null;
   const desk = await getCouponDesk();
 
   return (

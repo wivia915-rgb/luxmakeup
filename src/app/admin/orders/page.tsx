@@ -1,4 +1,5 @@
 import { OrdersBoard } from "@/components/admin/orders-board";
+import { deskIsOpen } from "@/lib/admin-gate";
 import { getOrderDesk } from "@/lib/admin-orders";
 import type { Metadata } from "next";
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOrdersPage() {
+  if (!(await deskIsOpen())) return null;
   const desk = await getOrderDesk();
 
   return (

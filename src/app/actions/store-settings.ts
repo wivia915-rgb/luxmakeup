@@ -1,9 +1,12 @@
 "use server";
 
 import { parseStoreSettings, saveStoreSettingsRow, type StoreSettingsInput } from "@/lib/store-settings";
+import { requireDesk } from "@/lib/admin-gate";
 import { revalidatePath } from "next/cache";
 
 export async function saveStoreSettings(input: StoreSettingsInput) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   const parsed = parseStoreSettings(input);
   if (!parsed.ok) return parsed;
 

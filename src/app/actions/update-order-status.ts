@@ -1,6 +1,7 @@
 "use server";
 
 import { isOrderStatus, type OrderStatusValue } from "@/lib/order-desk";
+import { requireDesk } from "@/lib/admin-gate";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -8,6 +9,8 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatusValue,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const gate = await requireDesk();
+  if (gate) return gate;
   if (!isOrderStatus(status)) {
     return { ok: false, error: "Unknown status." };
   }

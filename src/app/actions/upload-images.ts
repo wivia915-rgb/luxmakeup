@@ -1,11 +1,14 @@
 "use server";
 
+import { requireDesk } from "@/lib/admin-gate";
 import { prisma } from "@/lib/prisma";
 
 const maxBytes = 1_500_000;
 const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function uploadProductImage(formData: FormData) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false as const, error: "Choose a JPEG, PNG, or WebP image." };

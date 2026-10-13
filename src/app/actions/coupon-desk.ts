@@ -1,11 +1,14 @@
 "use server";
 
 import { parseCouponDraft, type CouponDraft } from "@/lib/admin-coupons";
+import { requireDesk } from "@/lib/admin-gate";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function createCoupon(input: CouponDraft) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   const parsed = parseCouponDraft(input);
   if (!parsed.ok) return parsed;
 
@@ -32,6 +35,8 @@ export async function createCoupon(input: CouponDraft) {
 }
 
 export async function toggleCoupon(id: string) {
+  const gate = await requireDesk();
+  if (gate) return gate;
   if (!id || id.length > 64) return { ok: false as const, error: "Unknown coupon." };
 
   try {

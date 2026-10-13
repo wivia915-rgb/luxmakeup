@@ -1,5 +1,7 @@
+import { DeskLock, DeskLockButton } from "@/components/admin/desk-lock";
 import { AdminCopyProvider } from "@/components/admin/admin-locale";
 import { adminMessages } from "@/lib/admin-copy";
+import { deskIsOpen } from "@/lib/admin-gate";
 import { getLocale } from "@/lib/get-locale";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -11,6 +13,13 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const copy = adminMessages[await getLocale()];
+  if (!(await deskIsOpen())) {
+    return (
+      <AdminCopyProvider copy={copy}>
+        <DeskLock />
+      </AdminCopyProvider>
+    );
+  }
 
   const links = [
     { href: "/admin", label: copy.nav.desk },
@@ -33,6 +42,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   {link.label}
                 </Link>
               ))}
+              <DeskLockButton />
             </nav>
           </aside>
           <div className="min-w-0 flex-1">
@@ -42,6 +52,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   {link.label}
                 </Link>
               ))}
+              <DeskLockButton />
             </nav>
             {children}
           </div>

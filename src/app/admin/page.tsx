@@ -1,5 +1,6 @@
 import { DeskOverview } from "@/components/admin/desk-overview";
 import { getAdminDesk } from "@/lib/admin-desk";
+import { deskIsOpen } from "@/lib/admin-gate";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
+  if (!(await deskIsOpen())) return null;
   const desk = await getAdminDesk();
   return <DeskOverview desk={desk} />;
 }
