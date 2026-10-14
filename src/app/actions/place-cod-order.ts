@@ -4,6 +4,7 @@ import { deliveryFee, resolveCity, shippingRatesFrom, validateCod } from "@/lib/
 import { discountForCoupon, normalizeCouponCode } from "@/lib/coupon-quote";
 import { getStoreSettings } from "@/lib/store-settings";
 import { formatDh } from "@/lib/products";
+import { variantUnitPrice } from "@/lib/variant-price";
 import { getProductPage } from "@/lib/product-story";
 import { prisma } from "@/lib/prisma";
 
@@ -31,7 +32,21 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
   const product = getProductPage(input.productId);
   const catalogPiece = product ? null : await prisma.product.findFirst({
     where: { slug: input.productId, available: true },
-    select: { id: true, title: true, slug: true, price: true, discountPrice: true, stock: true, ingredients: true, category: { select: { name: true } } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      price: true,
+      discountPrice: true,
+      stock: true,
+      ingredients: true,
+      category: { select: { name: true } },
+      variants: {
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, name: true, size: true, stock: true, priceAdjustment: true },
+      },
+    },
   });
   if (!product && !catalogPiece) {
     return { ok: false, error: "This piece is no longer available." };
@@ -41,9 +56,17 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
   if (product && !shade) {
     return { ok: false, error: "Choose a shade before ordering." };
   }
-  const shadeName = shade?.name ?? "Atelier";
+  const catalogVariant = catalogPiece
+    ? catalogPiece.variants.find((item) => item.id === input.shadeId) ??
+      (input.shadeId === "atelier" || input.shadeId === "" ? catalogPiece.variants.find((item) => item.stock > 0) : undefined)
+    : undefined;
+  if (catalogPiece && catalogPiece.variants.length > 0 && !catalogVariant) {
+    return { ok: false, error: "Choose a shade before ordering." };
+  }
+  const shadeName = shade?.name ?? (catalogVariant ? [catalogVariant.name, catalogVariant.size].filter(Boolean).join(" · ") : "Atelier");
   const pieceName = product?.name ?? catalogPiece!.title;
-  const piecePrice = product?.price ?? catalogPiece!.discountPrice ?? catalogPiece!.price;
+  const basePrice = product?.price ?? catalogPiece!.discountPrice ?? catalogPiece!.price;
+  const piecePrice = variantUnitPrice(basePrice, catalogVariant?.priceAdjustment);
   const pieceCategory = product?.category ?? catalogPiece!.category.name;
   const pieceIngredients = product ? product.ingredients.map((item) => item.name) : catalogPiece!.ingredients;
   const pieceSlug = product?.id ?? catalogPiece!.slug;
@@ -123,6 +146,12 @@ export async function placeCodOrder(input: PlaceCodOrderInput): Promise<PlaceCod
             },
           });
       if (!savedProduct) throw new Error("OUT_OF_STOCK");
+
+      if (catalogVariant) {
+        const fresh = await tx.productVariant.findUnique({ where: { id: catalogVariant.id }, select: { stock: true, isActive: true } });
+        if (!fresh || !fresh.isActive || fresh.stock < input.quantity) throw new Error("OUT_OF_STOCK");
+        await tx.productVariant.update({ where: { id: catalogVariant.id }, data: { stock: { decrement: input.quantity } } });
+      }
 
       if (savedProduct.stock < input.quantity) {
         throw new Error("OUT_OF_STOCK");

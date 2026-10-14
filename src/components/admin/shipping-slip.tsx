@@ -26,7 +26,7 @@ export function ShippingSlip({ order, onClose }: { order: DeskOrder; onClose: ()
       >
         <p className="cod-gold type-eyebrow">{copy.slip.eyebrow}</p>
         <h2 id="shipping-slip-title" className="mt-3 font-serif text-3xl tracking-[0.12em] text-foreground uppercase">
-          Lux Makeup
+          El Idrissi
         </h2>
         <p className="type-caption mt-2">{copy.slip.title}</p>
 

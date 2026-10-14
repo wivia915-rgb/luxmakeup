@@ -11,7 +11,7 @@ export async function generateImageMetadata({ params }: { params: Promise<{ slug
   return [
     {
       id: slug,
-      alt: product ? `${product.name} · Lux Makeup` : "Lux Makeup",
+      alt: product ? `${product.name} · El Idrissi` : "El Idrissi",
       size: ogSize,
       contentType: ogContentType,
     },
@@ -24,7 +24,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!product) {
     return luxCard({
-      eyebrow: "Lux Makeup",
+      eyebrow: "El Idrissi",
       title: "The maison",
       detail: "Makeup, perfume, and beauty.",
     });

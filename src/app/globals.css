@@ -1,30 +1,16 @@
 @import "tailwindcss";
 
 /*
-  Lux Makeup — dark chic design system
+  El Idrissi Parfumeur
 
-  Palette
-  --color-background   #0D0D0D   page
-  --color-card         #1A1A1A   cards and panels
-  --color-gold         #D4AF37   primary gold
-  --color-gold-bright  #E5C158   highlight gold
-  --color-foreground   #F8F8F8   text
-  --color-muted        ivory mixed into ink, for secondary copy
-  --color-line         gold mixed into card, for hairline borders
-
-  Typography (reusable classes)
-  .type-display    hero serif
-  .type-headline   section serif
-  .type-title      product / card serif
-  .type-quote      italic editorial serif
-  .type-italic     italic serif modifier
-  .type-eyebrow    gold small-caps sans
-  .type-lead       light introductory sans
-  .type-body       reading sans
-  .type-caption    meta sans
-  .type-nav        tracked uppercase sans
-  .type-price      gold price sans
-  .rule-gold       hairline gold gradient
+  The sign is a white ground, black letters, and a magenta lotus.
+  --color-background   page
+  --color-card         cards and panels
+  --color-gold         lotus pink, kept as the accent token
+  --color-gold-bright  deeper or brighter lotus, for small text and lines
+  --color-foreground   ink
+  --color-muted        secondary copy
+  --color-line         hairline borders
 */
 
 :root {
@@ -34,31 +20,31 @@
 
 @theme {
   --color-background: #0D0D0D;
-  --color-card: #1A1A1A;
-  --color-gold: #D4AF37;
-  --color-gold-bright: #E5C158;
+  --color-card: #161616;
+  --color-gold: #FF4D9A;
+  --color-gold-bright: #FF7AB8;
   --color-foreground: #F8F8F8;
   --color-muted: color-mix(in srgb, #F8F8F8 68%, #0D0D0D);
-  --color-line: color-mix(in srgb, #D4AF37 28%, #1A1A1A);
+  --color-line: color-mix(in srgb, #FF4D9A 28%, #161616);
 }
 
 html[data-theme="light"] {
   color-scheme: light;
-  --color-background: #F4EFE6;
-  --color-card: #FFFCF7;
-  --color-foreground: #1C140C;
-  --color-gold: #8A6416;
-  --color-gold-bright: #6E4E0C;
-  --color-muted: color-mix(in srgb, #1C140C 68%, #F4EFE6);
-  --color-line: color-mix(in srgb, #8A6416 32%, #FFFCF7);
+  --color-background: #FFFFFF;
+  --color-card: #FFF8FB;
+  --color-foreground: #141414;
+  --color-gold: #E2187A;
+  --color-gold-bright: #C01068;
+  --color-muted: color-mix(in srgb, #141414 62%, #FFFFFF);
+  --color-line: color-mix(in srgb, #E2187A 22%, #FFFFFF);
 }
 
 .lux-night {
   --color-background: #0a0a0a;
   --color-card: #0a0a0a;
   --color-foreground: #F8F8F8;
-  --color-gold: #D4AF37;
-  --color-gold-bright: #E5C158;
+  --color-gold: #FF4D9A;
+  --color-gold-bright: #FF7AB8;
   color: #F8F8F8;
   background-color: #0a0a0a;
 }
@@ -91,9 +77,14 @@ html[data-theme="light"] {
     -webkit-font-smoothing: antialiased;
   }
 
+  html[data-theme="light"] body {
+    background-image: url("/brand/veins.svg");
+    background-size: 280px 280px;
+  }
+
   ::selection {
-    background: #D4AF37;
-    color: #0D0D0D;
+    background: #E2187A;
+    color: #FFFFFF;
   }
 
   :focus-visible {

@@ -4,13 +4,31 @@ import type { Locale } from "@/lib/locale";
 export type TextLocales = Record<Locale, string>;
 export type IngredientLocales = Record<Locale, { name: string; benefit: string }>;
 
-export function pieceHash(title: string, description: string, ingredients: { name: string; benefit: string }[]) {
+export function pieceHash(
+  title: string,
+  description: string,
+  ingredients: { name: string; benefit: string }[],
+  highlights: string[] = [],
+  traits: string[] = [],
+) {
   const source = JSON.stringify({
     title: title.trim(),
     description: description.trim(),
     ingredients: ingredients.map((item) => [item.name.trim(), item.benefit.trim()]),
+    highlights: highlights.map((line) => line.trim()),
+    traits: traits.map((line) => line.trim()),
   });
   return createHash("sha256").update(source).digest("hex");
+}
+
+export function linesIn(locales: unknown, group: "highlights" | "traits", locale: Locale, fallback: string[]) {
+  if (!locales || typeof locales !== "object") return fallback;
+  const bucket = (locales as Record<string, unknown>)[group];
+  if (!bucket || typeof bucket !== "object") return fallback;
+  const value = (bucket as Record<string, unknown>)[locale];
+  if (!Array.isArray(value)) return fallback;
+  const lines = value.flatMap((item) => (typeof item === "string" && item.trim() ? [item.trim()] : []));
+  return lines.length > 0 ? lines : fallback;
 }
 
 export function textIn(locales: unknown, locale: Locale, fallback: string) {
@@ -94,12 +112,20 @@ export async function translateTitles(titles: string[]) {
   }
 }
 
-export async function translatePiece(input: { title: string; description: string; ingredients: { name: string; benefit: string }[] }) {
+export async function translatePiece(input: {
+  title: string;
+  description: string;
+  ingredients: { name: string; benefit: string }[];
+  highlights?: string[];
+  traits?: string[];
+}) {
   const key = process.env.OPENAI_API_KEY?.trim();
   if (!key) return null;
   const title = input.title.trim();
   const description = input.description.trim();
   const ingredients = input.ingredients.map((item) => ({ name: item.name.trim(), benefit: item.benefit.trim() }));
+  const highlights = (input.highlights ?? []).map((line) => line.trim()).filter(Boolean);
+  const traits = (input.traits ?? []).map((line) => line.trim()).filter(Boolean);
   if (!title) return null;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -142,8 +168,10 @@ export async function translatePiece(input: { title: string; description: string
                   required: ["ar", "fr", "en"],
                 },
               },
+              highlights: lineGroupSchema(),
+              traits: lineGroupSchema(),
             },
-            required: ["title", "description", "ingredients"],
+            required: ["title", "description", "ingredients", "highlights", "traits"],
           },
         },
       },
@@ -151,11 +179,11 @@ export async function translatePiece(input: { title: string; description: string
         {
           role: "system",
           content:
-            "Translate Lux Makeup product copy into Arabic, French, and English. Translate the title as well as the description and ingredients. Keep numerals such as 24K. Keep the meaning, the luxury tone, and every ingredient. If the source is already in a language, keep that version close to the original. Do not add medical claims, prices, or new ingredients. Return one ingredient object per source ingredient, in the same order.",
+            "Translate Lux Makeup product copy into Arabic, French, and English. Translate the title, the description, the ingredients, the feature lines, and the characteristic lines. Keep numerals such as 24K. Keep the meaning, the luxury tone, and every ingredient. If the source is already in a language, keep that version close to the original. Do not add medical claims, prices, or new ingredients. Return one ingredient object per source ingredient, in the same order. Return the same number of feature and characteristic lines, in the same order. Empty source lists stay empty arrays.",
         },
         {
           role: "user",
-          content: JSON.stringify({ title, description, ingredients }),
+          content: JSON.stringify({ title, description, ingredients, highlights, traits }),
         },
       ],
     }),
@@ -168,7 +196,17 @@ export async function translatePiece(input: { title: string; description: string
   if (!response.ok) return null;
   const content = payload?.choices?.[0]?.message?.content;
   if (!content) return null;
-  return parseTranslation(content, title, description, ingredients.length);
+  return parseTranslation(content, title, description, ingredients.length, highlights.length, traits.length);
+}
+
+function lineGroupSchema() {
+  const lines = { type: "array", items: { type: "string" } };
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: { ar: lines, fr: lines, en: lines },
+    required: ["ar", "fr", "en"],
+  };
 }
 
 function localeIngredient() {
@@ -180,16 +218,25 @@ function localeIngredient() {
   };
 }
 
-function parseTranslation(content: string, sourceTitle: string, sourceDescription: string, count: number) {
-  let parsed: { title?: unknown; description?: unknown; ingredients?: unknown };
+function parseTranslation(
+  content: string,
+  sourceTitle: string,
+  sourceDescription: string,
+  count: number,
+  highlightCount: number,
+  traitCount: number,
+) {
+  let parsed: { title?: unknown; description?: unknown; ingredients?: unknown; highlights?: unknown; traits?: unknown };
   try {
-    parsed = JSON.parse(content) as { title?: unknown; description?: unknown; ingredients?: unknown };
+    parsed = JSON.parse(content) as { title?: unknown; description?: unknown; ingredients?: unknown; highlights?: unknown; traits?: unknown };
   } catch {
     return null;
   }
   const title = textLocales(parsed.title, Boolean(sourceTitle), 120);
   const description = textLocales(parsed.description, Boolean(sourceDescription), 800);
-  if (!title || !description) return null;
+  const highlights = lineLocales(parsed.highlights, highlightCount, 120);
+  const traits = lineLocales(parsed.traits, traitCount, 120);
+  if (!title || !description || !highlights || !traits) return null;
   if (!Array.isArray(parsed.ingredients) || parsed.ingredients.length < count) return null;
   const ingredients: IngredientLocales[] = [];
   for (const item of parsed.ingredients.slice(0, count)) {
@@ -197,7 +244,27 @@ function parseTranslation(content: string, sourceTitle: string, sourceDescriptio
     if (!row) return null;
     ingredients.push(row);
   }
-  return { title, description, ingredients };
+  return { title, description, ingredients, highlights, traits };
+}
+
+function lineLocales(value: unknown, count: number, max: number): Record<Locale, string[]> | null {
+  if (count === 0) return { ar: [], fr: [], en: [] };
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const locales = ["ar", "fr", "en"] as const;
+  const result = {} as Record<Locale, string[]>;
+  for (const locale of locales) {
+    const items = row[locale];
+    if (!Array.isArray(items) || items.length < count) return null;
+    const lines: string[] = [];
+    for (const item of items.slice(0, count)) {
+      const line = clean(item, max);
+      if (!line) return null;
+      lines.push(line);
+    }
+    result[locale] = lines;
+  }
+  return result;
 }
 
 function textLocales(value: unknown, required: boolean, max: number): TextLocales | null {

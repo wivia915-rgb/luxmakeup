@@ -1,0 +1,3 @@
+ALTER TABLE "products" ADD COLUMN "highlights" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "products" ADD COLUMN "traits" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "products" ADD COLUMN "sellingLocales" JSONB NOT NULL DEFAULT '{}';

@@ -52,7 +52,7 @@ export function ProductStage({ motif, swatch, name }: { motif: Motif; swatch: st
           max={360}
           defaultValue={29}
           aria-label={`${name} rotation in degrees`}
-          className="mt-3 w-full accent-[#D4AF37]"
+          className="mt-3 w-full accent-[#E2187A]"
           onPointerDown={activate}
           onFocus={activate}
         />

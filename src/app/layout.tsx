@@ -18,33 +18,32 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 
-const description =
-  "Ultra-high-end makeup, perfume, and beauty. A dark maison of complexion, fragrance, and color.";
+const description = "El Idrissi Parfumeur. Makeup, perfume, and beauty, composed in black, white, and lotus pink.";
 
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
   title: {
-    default: "Lux Makeup",
-    template: "%s · Lux Makeup",
+    default: "El Idrissi",
+    template: "%s · El Idrissi",
   },
   description,
-  applicationName: "Lux Makeup",
+  applicationName: "El Idrissi",
   openGraph: {
     type: "website",
-    siteName: "Lux Makeup",
+    siteName: "El Idrissi",
     locale: "en_MA",
-    title: "Lux Makeup",
+    title: "El Idrissi",
     description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lux Makeup",
+    title: "El Idrissi",
     description,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0D0D0D",
+  themeColor: "#FFFFFF",
 };
 
 export default async function RootLayout({

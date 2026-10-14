@@ -31,7 +31,11 @@ export async function Hero() {
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/50" />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#0a0a0a_0%,rgba(10,10,10,0.78)_38%,rgba(10,10,10,0.28)_100%)] lg:bg-[linear-gradient(90deg,#0a0a0a_0%,rgba(10,10,10,0.88)_30%,rgba(10,10,10,0.42)_58%,rgba(10,10,10,0.18)_100%)]"
+        className={
+          locale === "ar"
+            ? "pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#0a0a0a_0%,rgba(10,10,10,0.78)_38%,rgba(10,10,10,0.28)_100%)] lg:bg-[linear-gradient(270deg,#0a0a0a_0%,rgba(10,10,10,0.92)_28%,rgba(10,10,10,0.72)_48%,rgba(10,10,10,0.28)_72%,rgba(10,10,10,0.08)_100%)]"
+            : "pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#0a0a0a_0%,rgba(10,10,10,0.78)_38%,rgba(10,10,10,0.28)_100%)] lg:bg-[linear-gradient(90deg,#0a0a0a_0%,rgba(10,10,10,0.88)_30%,rgba(10,10,10,0.42)_58%,rgba(10,10,10,0.18)_100%)]"
+        }
       />
 
       <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
@@ -48,8 +52,8 @@ export async function Hero() {
               animationDuration: `${sparkle.duration}s`,
             }}
           >
-            <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[#E5C158] shadow-[0_0_10px_#E5C158]" />
-            <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#E5C158] shadow-[0_0_10px_#E5C158]" />
+            <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[#FF4D9A] shadow-[0_0_10px_#FF4D9A]" />
+            <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#FF4D9A] shadow-[0_0_10px_#FF4D9A]" />
           </span>
         ))}
       </div>

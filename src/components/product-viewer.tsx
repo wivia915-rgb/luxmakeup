@@ -103,7 +103,7 @@ export function ProductViewer({ motif, swatch, name }: ProductViewerProps) {
           max={360}
           defaultValue={29}
           aria-label={`${name} rotation in degrees`}
-          className="mt-3 w-full accent-[#D4AF37]"
+          className="mt-3 w-full accent-[#E2187A]"
           onChange={(event) => {
             angleRef.current = (Number(event.target.value) * Math.PI) / 180;
           }}
@@ -132,10 +132,10 @@ function ViewerScene({
     <>
       <ambientLight intensity={0.45} color="#F8F8F8" />
       <directionalLight position={[3, 4, 4]} intensity={1.5} color="#FFF8EE" />
-      <pointLight position={[-2.2, 1.2, 2]} intensity={8} color="#E5C158" distance={10} decay={2} />
+      <pointLight position={[-2.2, 1.2, 2]} intensity={8} color="#FF4D9A" distance={10} decay={2} />
       <Environment resolution={256} environmentIntensity={0.85}>
         <Lightformer form="rect" intensity={1.4} color="#F8F8F8" position={[0, 2.4, 2]} scale={[7, 1.4, 1]} />
-        <Lightformer form="rect" intensity={0.6} color="#E5C158" position={[-3, 0.4, -1]} scale={[1.4, 4, 1]} />
+        <Lightformer form="rect" intensity={0.6} color="#FF4D9A" position={[-3, 0.4, -1]} scale={[1.4, 4, 1]} />
       </Environment>
       <group ref={group}>
         <MotifMesh motif={motif} swatch={swatch} />
@@ -213,7 +213,7 @@ function MotifMesh({ motif, swatch }: { motif: Motif; swatch: string }) {
         </mesh>
         <mesh position={[0.1, 0.12, -0.28]}>
           <boxGeometry args={[0.42, 0.06, 0.42]} />
-          <meshStandardMaterial color="#E5C158" metalness={0.55} roughness={0.3} />
+          <meshStandardMaterial color="#FF4D9A" metalness={0.55} roughness={0.3} />
         </mesh>
         <mesh position={[0.45, 0.12, 0.28]}>
           <boxGeometry args={[0.42, 0.06, 0.42]} />

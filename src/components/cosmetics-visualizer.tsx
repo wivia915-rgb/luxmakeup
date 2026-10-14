@@ -166,13 +166,13 @@ function AtelierScene() {
     <>
       <ambientLight intensity={0.42} color="#F8F8F8" />
       <directionalLight position={[3.2, 4.2, 4.5]} intensity={1.45} color="#FFF8EE" />
-      <directionalLight position={[-3.5, 1.4, -2.5]} intensity={0.55} color="#E5C158" />
-      <pointLight position={[-2.4, 1.1, 2.2]} intensity={10} color="#E5C158" distance={11} decay={2} />
+      <directionalLight position={[-3.5, 1.4, -2.5]} intensity={0.55} color="#FF4D9A" />
+      <pointLight position={[-2.4, 1.1, 2.2]} intensity={10} color="#FF4D9A" distance={11} decay={2} />
       <pointLight position={[2.2, -0.6, 2.8]} intensity={4} color="#F8F8F8" distance={9} decay={2} />
 
       <Environment resolution={256} environmentIntensity={0.9}>
         <Lightformer form="rect" intensity={1.5} color="#F8F8F8" position={[0, 2.6, 2]} scale={[8, 1.6, 1]} />
-        <Lightformer form="rect" intensity={0.65} color="#E5C158" position={[-3.6, 0.4, -1]} scale={[1.6, 4.5, 1]} />
+        <Lightformer form="rect" intensity={0.65} color="#FF4D9A" position={[-3.6, 0.4, -1]} scale={[1.6, 4.5, 1]} />
         <Lightformer form="rect" intensity={0.85} color="#F8F8F8" position={[3.8, 0.8, 1.5]} scale={[1.8, 2.8, 1]} />
       </Environment>
 
@@ -186,7 +186,7 @@ function AtelierScene() {
         size={2.4}
         speed={reduce ? 0 : 0.35}
         opacity={0.75}
-        color="#E5C158"
+        color="#FF4D9A"
         noise={0.55}
         position={[origin[0], origin[1] + 0.35, 0]}
       />

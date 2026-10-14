@@ -2,7 +2,7 @@ import { luxCard, ogContentType, ogSize } from "@/lib/og-card";
 import { getProductPage } from "@/lib/product-story";
 import { formatDh } from "@/lib/products";
 
-export const alt = "Lux Makeup";
+export const alt = "El Idrissi";
 export const size = ogSize;
 export const contentType = ogContentType;
 
@@ -12,7 +12,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!product) {
     return luxCard({
-      eyebrow: "Lux Makeup",
+      eyebrow: "El Idrissi",
       title: "The maison",
       detail: "Makeup, perfume, and beauty.",
     });

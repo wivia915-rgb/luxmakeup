@@ -1,6 +1,5 @@
 "use client";
 
-import { askAtelierAgent } from "@/app/actions/atelier-agent";
 import type { Dictionary } from "@/lib/messages";
 import { Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -22,16 +21,47 @@ export function AtelierAgent({ copy, ready }: { copy: Dictionary["agent"]; ready
     const content = draft.trim();
     if (!content || sending) return;
     const history = [...messages, { role: "user" as const, content }];
-    setMessages(history);
+    setMessages([...history, { role: "assistant", content: "" }]);
     setDraft("");
     setSending(true);
-    const result = await askAtelierAgent({ messages: history });
-    setSending(false);
-    if (!result.ok) {
-      setMessages((current) => [...current, { role: "assistant", content: copy.error }]);
-      return;
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+      if (!response.ok || !response.body) {
+        replaceLast(copy.error);
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+        const next = text;
+        setMessages((current) => {
+          const copyMessages = current.slice();
+          copyMessages[copyMessages.length - 1] = { role: "assistant", content: next };
+          return copyMessages;
+        });
+      }
+      if (!text.trim()) replaceLast(copy.error);
+    } catch {
+      replaceLast(copy.error);
+    } finally {
+      setSending(false);
     }
-    setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
+  }
+
+  function replaceLast(content: string) {
+    setMessages((current) => {
+      const copyMessages = current.slice();
+      copyMessages[copyMessages.length - 1] = { role: "assistant", content };
+      return copyMessages;
+    });
   }
 
   if (hidden) return null;
@@ -53,7 +83,7 @@ export function AtelierAgent({ copy, ready }: { copy: Dictionary["agent"]; ready
                 key={`${message.role}-${index}`}
                 className={`type-body max-w-[90%] px-3 py-2 ${message.role === "user" ? "self-end border border-gold/30 text-foreground" : "self-start text-foreground/85"}`}
               >
-                {message.content}
+                {message.content || (sending ? "…" : "")}
               </p>
             ))}
           </div>
@@ -65,7 +95,7 @@ export function AtelierAgent({ copy, ready }: { copy: Dictionary["agent"]; ready
               maxLength={500}
               className="min-w-0 flex-1 border border-gold/30 bg-background px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
             />
-            <button type="submit" disabled={sending || draft.trim().length === 0} className="type-nav bg-[#D4AF37] px-4 py-3 text-[#0D0D0D] disabled:opacity-50">
+            <button type="submit" disabled={sending || draft.trim().length === 0} className="type-nav bg-[#E2187A] px-4 py-3 text-white disabled:opacity-50">
               {sending ? copy.sending : copy.send}
             </button>
           </form>
@@ -76,7 +106,7 @@ export function AtelierAgent({ copy, ready }: { copy: Dictionary["agent"]; ready
         aria-label={open ? copy.close : copy.open}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="grid size-14 place-items-center rounded-full border border-gold-bright bg-[#0D0D0D] text-[#E5C158] shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition-transform hover:scale-105"
+        className="grid size-14 place-items-center rounded-full border border-gold-bright bg-[#0D0D0D] text-[#FF4D9A] shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition-transform hover:scale-105"
       >
         <Sparkles strokeWidth={1.25} size={22} />
       </button>

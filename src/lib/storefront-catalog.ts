@@ -1,11 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { getProductPage, ingredientIcons, type Ingredient } from "@/lib/product-story";
-import { ingredientIn, textIn } from "@/lib/piece-locales";
+import { ingredientIn, linesIn, textIn } from "@/lib/piece-locales";
 import type { Locale } from "@/lib/locale";
 import type { Motif, ProductCategory, ProductMood } from "@/lib/products";
 
+export type StorefrontVariant = {
+  id: string;
+  name: string;
+  colorCode: string | null;
+  size: string | null;
+  priceAdjustment: number;
+  stock: number;
+};
+
 export type StorefrontPieceDetail = StorefrontPiece & {
   ingredients: Ingredient[];
+  highlights: string[];
+  traits: string[];
+  variants: StorefrontVariant[];
 };
 
 export type StorefrontPiece = {
@@ -94,9 +106,17 @@ export async function getStorefrontPiece(slug: string, locale: Locale = "en"): P
         description: true,
         descriptionLocales: true,
         titleLocales: true,
+        highlights: true,
+        traits: true,
+        sellingLocales: true,
         images: true,
         ingredients: true,
         formula: { orderBy: { sortOrder: "asc" }, select: { name: true, benefit: true, icon: true, locales: true } },
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: "asc" },
+          select: { id: true, name: true, colorCode: true, size: true, priceAdjustment: true, stock: true },
+        },
         category: { select: { name: true, slug: true } },
       },
     });
@@ -115,11 +135,14 @@ export async function getStorefrontPiece(slug: string, locale: Locale = "en"): P
       offer: payable < row.price,
       badge: row.category.name,
       description: textIn(row.descriptionLocales, locale, row.description ?? ""),
+      highlights: linesIn(row.sellingLocales, "highlights", locale, row.highlights),
+      traits: linesIn(row.sellingLocales, "traits", locale, row.traits),
       image,
       images,
       motif: motifFor(category),
-      shadeId: "atelier",
+      shadeId: row.variants.find((variant) => variant.stock > 0)?.id ?? row.variants[0]?.id ?? "atelier",
       ingredients: formulaOf(row.formula, row.ingredients, locale),
+      variants: row.variants,
     };
   } catch (error) {
     console.error("Storefront piece could not be loaded", error instanceof Error ? error.name : "unknown");

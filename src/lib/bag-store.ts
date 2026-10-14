@@ -40,7 +40,7 @@ export function writeBag(lines: BagLine[]) {
 export function addToBag(line: Omit<BagLine, "quantity"> & { quantity?: number }) {
   const quantity = Math.min(8, Math.max(1, line.quantity ?? 1));
   const lines = readBag();
-  const existing = lines.find((item) => item.id === line.id);
+  const existing = lines.find((item) => item.id === line.id && item.shadeId === line.shadeId);
   if (existing) existing.quantity = Math.min(8, existing.quantity + quantity);
   else lines.push({ id: line.id, name: line.name, price: line.price, quantity, image: line.image, shadeId: line.shadeId });
   writeBag(lines);

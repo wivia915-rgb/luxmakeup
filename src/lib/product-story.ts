@@ -4,6 +4,9 @@ export type Shade = {
   id: string;
   name: string;
   swatch: string;
+  size?: string;
+  priceAdjustment?: number;
+  available?: boolean;
 };
 
 export const ingredientIcons = ["droplet", "spark", "leaf", "sun", "gem", "flower"] as const;
@@ -19,6 +22,8 @@ export type Ingredient = {
 export type ProductPageData = Product & {
   shades: Shade[];
   ingredients: Ingredient[];
+  highlights?: string[];
+  traits?: string[];
 };
 
 const stories: Record<string, { shades: Shade[]; ingredients: Ingredient[] }> = {
@@ -72,8 +77,8 @@ const stories: Record<string, { shades: Shade[]; ingredients: Ingredient[] }> = 
   },
   "or-de-soir": {
     shades: [
-      { id: "or", name: "Or", swatch: "#D4AF37" },
-      { id: "champagne", name: "Champagne", swatch: "#E5C158" },
+      { id: "or", name: "Or", swatch: "#E2187A" },
+      { id: "champagne", name: "Champagne", swatch: "#FF4D9A" },
       { id: "bronze", name: "Bronze", swatch: "#8C6239" },
     ],
     ingredients: [
@@ -121,7 +126,7 @@ const stories: Record<string, { shades: Shade[]; ingredients: Ingredient[] }> = 
   "lait-dor": {
     shades: [
       { id: "clair", name: "Clair", swatch: "#F6E7C4" },
-      { id: "dore", name: "Doré", swatch: "#E5C158" },
+      { id: "dore", name: "Doré", swatch: "#FF4D9A" },
       { id: "miel", name: "Miel", swatch: "#C9A15B" },
     ],
     ingredients: [
@@ -157,7 +162,7 @@ const stories: Record<string, { shades: Shade[]; ingredients: Ingredient[] }> = 
   "eclat-noir": {
     shades: [
       { id: "perle", name: "Perle", swatch: "#E8E4DC" },
-      { id: "champagne", name: "Champagne", swatch: "#E5C158" },
+      { id: "champagne", name: "Champagne", swatch: "#FF4D9A" },
       { id: "bronze", name: "Bronze Noir", swatch: "#7A5A3A" },
     ],
     ingredients: [

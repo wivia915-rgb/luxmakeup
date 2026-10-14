@@ -412,7 +412,7 @@ export function CodDrawer({ open, line, onClose, shippingRates = defaultShipping
                   <button
                     type="submit"
                     disabled={!check.valid || submitting}
-                    className="type-nav w-full bg-[#D4AF37] px-6 py-4 text-[#0D0D0D] transition-opacity enabled:hover:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="type-nav w-full bg-[#E2187A] px-6 py-4 text-white transition-opacity enabled:hover:bg-[#FF4D9A] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {submitting ? copy.sending : check.valid && payable !== null ? copy.submit.replace("{total}", formatDh(payable)) : copy.submitIdle}
                   </button>

@@ -23,8 +23,8 @@ type StatusFilter = (typeof statusFilterIds)[number];
 
 const badgeClass: Record<OrderStatusValue, string> = {
   PENDING: "border border-gold-bright text-gold-bright",
-  CONFIRMED: "border border-gold/50 bg-[#D4AF37]/10 text-gold-bright",
-  SHIPPED: "bg-[#D4AF37] text-[#0D0D0D]",
+  CONFIRMED: "border border-gold/50 bg-[#E2187A]/10 text-gold-bright",
+  SHIPPED: "bg-[#E2187A] text-white",
   DELIVERED: "bg-foreground text-background",
   CANCELLED: "border border-foreground/25 text-foreground/55",
 };
@@ -136,7 +136,7 @@ export function OrdersBoard({ connected, metrics, orders }: OrdersBoardProps) {
             {ordersCopy.export}
           </button>
           <p className="type-caption inline-flex items-center gap-2">
-            <span className="size-1.5 animate-pulse bg-[#E5C158]" aria-hidden />
+            <span className="size-1.5 animate-pulse bg-[#FF4D9A]" aria-hidden />
             {ordersCopy.live}
           </p>
         </div>

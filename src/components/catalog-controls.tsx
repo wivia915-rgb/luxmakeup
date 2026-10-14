@@ -4,10 +4,9 @@ import { CodDrawer, type CodDrawerProps } from "@/components/cod-drawer";
 import { pieceCount, type Dictionary } from "@/lib/messages";
 import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
 import { categories, categoryFromHash, hashForCategory, moods, type Category, type Mood } from "@/lib/products";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 
-const chip =
-  "type-nav border px-4 py-3 text-foreground/80 transition-colors hover:border-gold-bright hover:text-gold-bright";
+const chip = "type-nav border px-4 py-3";
 
 export function CatalogControls({ total, copy, shippingRates = defaultShippingRates }: { total: number; copy: Dictionary; shippingRates?: ShippingRates }) {
   const [category, setCategory] = useState<Category>("All");
@@ -25,7 +24,7 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const pieces = document.querySelectorAll<HTMLElement>("[data-piece]");
     let count = 0;
     pieces.forEach((piece) => {
@@ -69,6 +68,7 @@ export function CatalogControls({ total, copy, shippingRates = defaultShippingRa
     const hash = hashForCategory(next);
     if (window.location.hash !== hash) {
       window.history.replaceState(null, "", hash);
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
   }
 
@@ -161,7 +161,7 @@ function FilterChip({
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={`${chip} scroll-mt-36 ${pressed ? "border-gold-bright bg-gold/10 text-gold-bright" : "border-gold/25"}`}
+      className={`${chip} scroll-mt-36 ${pressed ? "border-gold-bright bg-gold/10 text-gold-bright" : "border-gold/25 bg-background text-foreground/80 hover:border-gold-bright hover:text-gold-bright"}`}
     >
       {children}
     </button>

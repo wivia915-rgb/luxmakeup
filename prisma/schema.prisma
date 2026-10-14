@@ -42,6 +42,9 @@ model Product {
   descriptionLocales Json    @default("{}")
   titleLocales  Json    @default("{}")
   copyHash      String  @default("")
+  highlights    String[] @default([])
+  traits        String[] @default([])
+  sellingLocales Json    @default("{}")
   ingredients   String[]
   images        String[]
   stock         Int         @default(0)

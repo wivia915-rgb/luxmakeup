@@ -9,8 +9,8 @@ import Link from "next/link";
 const figure = "font-serif [font-variant-numeric:lining-nums]";
 
 const statusColor: Record<DeskStatusSlice["status"], string> = {
-  PENDING: "#E5C158",
-  SHIPPED: "#D4AF37",
+  PENDING: "#FF4D9A",
+  SHIPPED: "#E2187A",
   CANCELLED: "#E7B4A8",
   CONFIRMED: "#8C7340",
   DELIVERED: "var(--color-foreground)",
@@ -162,8 +162,8 @@ function RankChart({
                   <span className="type-caption text-foreground">{row.label}</span>
                   <span className="type-caption shrink-0 text-gold-bright">{metric(row)}</span>
                 </div>
-                <div className="mt-2 h-px bg-[#D4AF37]/20" aria-hidden>
-                  <div className="h-[3px] -translate-y-px bg-[#D4AF37]" style={{ width: `${width}%` }} />
+                <div className="mt-2 h-px bg-[#E2187A]/20" aria-hidden>
+                  <div className="h-[3px] -translate-y-px bg-[#E2187A]" style={{ width: `${width}%` }} />
                 </div>
               </li>
             );

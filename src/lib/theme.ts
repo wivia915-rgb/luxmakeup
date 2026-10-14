@@ -3,5 +3,5 @@ export type Theme = (typeof themes)[number];
 export const THEME_COOKIE = "lux-theme";
 
 export function parseTheme(value: string | undefined): Theme {
-  return value === "light" ? "light" : "dark";
+  return value === "dark" ? "dark" : "light";
 }

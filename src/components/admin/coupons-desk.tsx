@@ -206,7 +206,7 @@ export function CouponsDesk({ connected, coupons }: { connected: boolean; coupon
                   type="checkbox"
                   checked={draft.isActive}
                   onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })}
-                  className="size-4 accent-[#D4AF37]"
+                  className="size-4 accent-[#E2187A]"
                 />
                 <span className="type-body">{copy.coupons.active}</span>
               </label>

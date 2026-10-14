@@ -10,6 +10,7 @@ import type { Dictionary } from "@/lib/messages";
 import type { Theme } from "@/lib/theme";
 import { formatDh } from "@/lib/products";
 import { storeWhatsAppUrl } from "@/lib/store-contact";
+import { openStorefrontHash } from "@/lib/storefront-hash";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -49,6 +50,7 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState<"search" | "bag" | null>(null);
   const [query, setQuery] = useState("");
+  const [hash, setHash] = useState("");
   const [bag, setBag] = useState<BagLine[]>([]);
   const [orderLine, setOrderLine] = useState<BagLine | null>(null);
   const navigation = [
@@ -61,6 +63,13 @@ export function SiteHeader({
   useEffect(() => {
     setBag(readBag());
     return onBagChange(() => setBag(readBag()));
+  }, []);
+
+  useEffect(() => {
+    const read = () => setHash(window.location.hash);
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
   }, []);
 
   useEffect(() => {
@@ -129,19 +138,25 @@ export function SiteHeader({
         ) : null}
       </div>
       <div className="flex items-center justify-between gap-3 px-5 py-4 md:px-10">
-        <Link
-          href="/"
-          className="font-serif text-sm uppercase tracking-[0.18em] whitespace-nowrap text-foreground sm:text-base sm:tracking-[0.28em]"
-        >
-          Lux <span className="text-gold-bright">Makeup</span>
+        <Link href="/" className="shrink-0" aria-label="El Idrissi Parfumeur">
+          <img src="/brand/el-idrissi.png?v=4" alt="" className="h-16 w-auto sm:h-20" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="type-nav text-foreground/80 transition-colors hover:text-gold-bright">
-              {item.label}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            const selected = hash.length > 1 && item.href.endsWith(hash);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={selected ? "true" : undefined}
+                onClick={(event) => openStorefrontHash(event, item.href)}
+                className={`type-nav whitespace-nowrap border px-3 py-2 ${selected ? "border-gold-bright bg-gold/10 text-gold-bright" : "border-transparent text-foreground/80 hover:text-gold-bright"}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -160,7 +175,7 @@ export function SiteHeader({
           <button type="button" className={`${iconButton} relative`} aria-label={copy.bag} aria-expanded={panel === "bag"} onClick={() => toggle("bag")}>
             <ShoppingBag strokeWidth={1.25} size={18} />
             {bagCount > 0 ? (
-              <span className="absolute -top-1.5 -end-1.5 grid min-w-4 place-items-center bg-[#D4AF37] px-1 text-[0.6rem] leading-4 text-[#0D0D0D]">{bagCount}</span>
+              <span className="absolute -top-1.5 -end-1.5 grid min-w-4 place-items-center bg-[#E2187A] px-1 text-[0.6rem] leading-4 text-white">{bagCount}</span>
             ) : null}
           </button>
           <button
@@ -211,7 +226,14 @@ export function SiteHeader({
           {bag.length === 0 ? (
             <div className="mt-4">
               <p className="type-body">{copy.tools.bagEmpty}</p>
-              <Link href="/#edit" onClick={() => setPanel(null)} className="type-nav mt-4 inline-block border border-gold-bright px-4 py-3 text-gold-bright">
+              <Link
+                href="/#edit"
+                onClick={(event) => {
+                  openStorefrontHash(event, "/#edit");
+                  setPanel(null);
+                }}
+                className="type-nav mt-4 inline-block border border-gold-bright px-4 py-3 text-gold-bright"
+              >
                 {copy.tools.bagBrowse}
               </Link>
             </div>
@@ -262,7 +284,15 @@ export function SiteHeader({
           <ul className="flex flex-col px-5 py-2">
             {navigation.map((item) => (
               <li key={item.href} className="border-b border-gold/15 last:border-b-0">
-                <Link href={item.href} className="type-nav block py-4 text-foreground" onClick={() => setMenuOpen(false)}>
+                <Link
+                  href={item.href}
+                  aria-current={hash.length > 1 && item.href.endsWith(hash) ? "true" : undefined}
+                  className={`type-nav block border px-3 py-4 ${hash.length > 1 && item.href.endsWith(hash) ? "border-gold-bright bg-gold/10 text-gold-bright" : "border-transparent text-foreground"}`}
+                  onClick={(event) => {
+                    openStorefrontHash(event, item.href);
+                    setMenuOpen(false);
+                  }}
+                >
                   {item.label}
                 </Link>
               </li>

@@ -63,12 +63,12 @@ export function AgentDesk({ prompt, enabled, connected }: { prompt: string; enab
           {writing ? copy.generating : copy.generate}
         </button>
         <label className="mt-6 flex items-center gap-3">
-          <input type="checkbox" checked={shown} onChange={(event) => { setShown(event.target.checked); setSaved(false); }} className="size-4 accent-[#D4AF37]" />
+          <input type="checkbox" checked={shown} onChange={(event) => { setShown(event.target.checked); setSaved(false); }} className="size-4 accent-[#E2187A]" />
           <span className="type-body">{copy.enabled}</span>
         </label>
         {notice ? <p className="type-body mt-4 text-gold-bright">{notice}</p> : null}
         {saved ? <p className="type-body mt-4">{copy.saved}</p> : null}
-        <button type="submit" disabled={saving} className="type-nav mt-6 bg-[#D4AF37] px-6 py-3 text-[#0D0D0D] disabled:opacity-50">
+        <button type="submit" disabled={saving} className="type-nav mt-6 bg-[#E2187A] px-6 py-3 text-white disabled:opacity-50">
           {saving ? copy.saving : copy.save}
         </button>
       </form>

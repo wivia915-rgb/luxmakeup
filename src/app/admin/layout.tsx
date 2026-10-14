@@ -36,7 +36,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <div className="flex min-h-[calc(100svh-5.5rem)]">
           <aside className="hidden w-52 shrink-0 border-e border-gold/20 px-6 py-8 md:block">
             <p className="type-eyebrow">{copy.nav.eyebrow}</p>
-            <p className="mt-3 font-serif text-2xl tracking-[0.14em] text-foreground uppercase">Lux</p>
+            <Link href="/" className="mt-4 inline-block" aria-label="El Idrissi Parfumeur">
+              <img src="/brand/el-idrissi.png?v=4" alt="" className="h-16 w-auto" />
+            </Link>
             <nav className="mt-10 flex flex-col gap-4" aria-label={copy.nav.label}>
               {links.map((link) => (
                 <Link key={link.href} href={link.href} className="type-nav text-foreground/80 hover:text-gold-bright">

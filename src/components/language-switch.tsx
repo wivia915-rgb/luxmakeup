@@ -62,12 +62,12 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
           className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`}
         />
       </button>
-      <div className={`absolute end-0 top-full z-50 pt-2 ${open ? "" : "pointer-events-none"}`}>
+      <div className={`absolute end-0 top-full z-50 w-44 pt-2 ${open ? "" : "pointer-events-none"}`}>
         <div
           className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
         >
           <div className="overflow-hidden" {...(open ? {} : { inert: true })}>
-            <ul id={listId} role="listbox" aria-label={label} className="min-w-40 border border-gold/30 bg-card shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+            <ul id={listId} role="listbox" aria-label={label} className="w-full border border-gold/30 bg-card shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
               {options.map((option) => {
                 const selected = option.id === locale;
                 return (
@@ -76,9 +76,10 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
                       type="button"
                       role="option"
                       lang={option.id}
+                      dir={option.id === "ar" ? "rtl" : "ltr"}
                       aria-selected={selected}
                       onClick={() => choose(option.id)}
-                      className={`type-nav block w-full px-4 py-3 text-start text-[0.68rem] transition-colors ${selected ? "bg-gold/15 text-gold-bright" : "text-foreground/80 hover:bg-background hover:text-gold-bright"}`}
+                      className={`block w-full whitespace-nowrap px-4 py-3 text-start text-sm transition-colors ${selected ? "bg-gold/15 text-gold-bright" : "text-foreground/80 hover:bg-background hover:text-gold-bright"}`}
                     >
                       {option.name}
                     </button>

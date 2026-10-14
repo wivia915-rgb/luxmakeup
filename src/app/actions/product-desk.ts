@@ -16,7 +16,7 @@ export async function createProduct(input: ProductDraft) {
   try {
     const categoryId = await categoryIdFor(parsed.value.category);
     const slug = await uniqueSlug(parsed.value.title);
-    const copy = await localizedCopy(parsed.value.title, parsed.value.description, parsed.value.ingredients);
+    const copy = await localizedCopy(parsed.value.title, parsed.value.description, parsed.value.ingredients, parsed.value.highlights, parsed.value.traits);
     const created = await prisma.product.create({
       data: {
         title: parsed.value.title,
@@ -24,7 +24,10 @@ export async function createProduct(input: ProductDraft) {
         description: parsed.value.description || null,
         descriptionLocales: copy.descriptionLocales,
         titleLocales: copy.titleLocales,
+        sellingLocales: copy.sellingLocales,
         copyHash: copy.hash,
+        highlights: parsed.value.highlights,
+        traits: parsed.value.traits,
         price: parsed.value.price,
         stock: parsed.value.stock,
         available: parsed.value.stock > 0,
@@ -61,6 +64,7 @@ export async function updateProduct(id: string, input: ProductDraft) {
         copyHash: true,
         descriptionLocales: true,
         titleLocales: true,
+        sellingLocales: true,
         formula: { orderBy: { sortOrder: "asc" }, select: { locales: true } },
       },
     });
@@ -68,7 +72,14 @@ export async function updateProduct(id: string, input: ProductDraft) {
 
     const available = parsed.value.stock === 0 ? false : current.stock === 0 ? true : current.available;
     const categoryId = await categoryIdFor(parsed.value.category);
-    const copy = await localizedCopy(parsed.value.title, parsed.value.description, parsed.value.ingredients, current);
+    const copy = await localizedCopy(
+      parsed.value.title,
+      parsed.value.description,
+      parsed.value.ingredients,
+      parsed.value.highlights,
+      parsed.value.traits,
+      current,
+    );
     await prisma.product.update({
       where: { id },
       data: {
@@ -76,7 +87,10 @@ export async function updateProduct(id: string, input: ProductDraft) {
         description: parsed.value.description || null,
         descriptionLocales: copy.descriptionLocales,
         titleLocales: copy.titleLocales,
+        sellingLocales: copy.sellingLocales,
         copyHash: copy.hash,
+        highlights: parsed.value.highlights,
+        traits: parsed.value.traits,
         price: parsed.value.price,
         stock: parsed.value.stock,
         available,
@@ -192,9 +206,17 @@ async function localizedCopy(
   title: string,
   description: string,
   ingredients: { name: string; benefit: string }[],
-  existing?: { copyHash: string; descriptionLocales: Prisma.JsonValue; titleLocales: Prisma.JsonValue; formula: { locales: Prisma.JsonValue }[] },
+  highlights: string[],
+  traits: string[],
+  existing?: {
+    copyHash: string;
+    descriptionLocales: Prisma.JsonValue;
+    titleLocales: Prisma.JsonValue;
+    sellingLocales: Prisma.JsonValue;
+    formula: { locales: Prisma.JsonValue }[];
+  },
 ) {
-  const hash = pieceHash(title, description, ingredients);
+  const hash = pieceHash(title, description, ingredients, highlights, traits);
   if (
     existing &&
     existing.copyHash === hash &&
@@ -205,23 +227,25 @@ async function localizedCopy(
       hash,
       descriptionLocales: existing.descriptionLocales as Prisma.InputJsonValue,
       titleLocales: existing.titleLocales as Prisma.InputJsonValue,
+      sellingLocales: existing.sellingLocales as Prisma.InputJsonValue,
       ingredientLocales: existing.formula.map((row) => row.locales as Prisma.InputJsonValue),
     };
   }
   try {
-    const translated = await translatePiece({ title, description, ingredients });
+    const translated = await translatePiece({ title, description, ingredients, highlights, traits });
     if (translated) {
       return {
         hash,
         descriptionLocales: translated.description,
         titleLocales: translated.title,
+        sellingLocales: { highlights: translated.highlights, traits: translated.traits },
         ingredientLocales: translated.ingredients,
       };
     }
   } catch (error) {
     console.error("Piece copy was not translated", error instanceof Error ? error.name : "unknown");
   }
-  return { hash: "", descriptionLocales: {}, titleLocales: {}, ingredientLocales: ingredients.map(() => ({})) };
+  return { hash: "", descriptionLocales: {}, titleLocales: {}, sellingLocales: {}, ingredientLocales: ingredients.map(() => ({})) };
 }
 
 function variantRows(variants: VariantWrite[]) {

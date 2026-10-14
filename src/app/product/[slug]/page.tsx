@@ -38,14 +38,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     openGraph: {
       type: "website",
       url,
-      siteName: "Lux Makeup",
+      siteName: "El Idrissi",
       locale: "en_MA",
-      title: `${product.name} · Lux Makeup`,
+      title: `${product.name} · El Idrissi`,
       description: summary,
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.name} · Lux Makeup`,
+      title: `${product.name} · El Idrissi`,
       description: summary,
     },
     other: {
@@ -73,7 +73,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     name: product.name,
     description: product.description,
     category: product.category,
-    brand: { "@type": "Brand", name: "Lux Makeup" },
+    brand: { "@type": "Brand", name: "El Idrissi" },
     offers: {
       "@type": "Offer",
       priceCurrency: "MAD",
@@ -113,8 +113,17 @@ function catalogPageFrom(piece: StorefrontPieceDetail): ProductPageData {
     offer: piece.offer,
     badge: piece.badge,
     description: piece.description,
+    highlights: piece.highlights,
+    traits: piece.traits,
     motif: piece.motif,
-    shades: [{ id: "atelier", name: "Atelier", swatch: "#D4AF37" }],
+    shades: piece.variants.map((variant) => ({
+      id: variant.id,
+      name: variant.name,
+      size: variant.size ?? undefined,
+      swatch: variant.colorCode ?? "#F4F4F4",
+      priceAdjustment: variant.priceAdjustment,
+      available: variant.stock > 0,
+    })),
     ingredients: piece.ingredients,
   };
 }

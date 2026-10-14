@@ -7,6 +7,7 @@ import { uploadProductImage } from "@/app/actions/upload-images";
 import { useAdminCopy, useDeskError } from "@/components/admin/admin-locale";
 import { fillCount } from "@/lib/admin-copy";
 import { deskCategories, type DeskProduct, type DeskVariant, type IngredientDraft, type ProductDraft, type VariantDraft } from "@/lib/admin-catalog";
+import { shadeNameForColor } from "@/lib/color-name";
 import { ingredientIcons } from "@/lib/product-story";
 import { type LifestylePerson } from "@/lib/lifestyle-image";
 import { formatDh } from "@/lib/products";
@@ -23,11 +24,34 @@ const emptyDraft: ProductDraft = {
   stock: "0",
   variants: [],
   ingredients: [],
+  highlights: [],
+  traits: [],
 };
 
+function groupedVariants(variants: DeskVariant[]): VariantDraft[] {
+  const groups = new Map<string, string>();
+  return variants.map((variant) => {
+    const key = `${variant.name.trim().toLowerCase()}|${variant.colorCode.trim().toUpperCase()}`;
+    const groupId = groups.get(key) ?? variant.id;
+    groups.set(key, groupId);
+    return {
+      clientId: variant.id,
+      groupId,
+      name: variant.name,
+      colorCode: variant.colorCode,
+      size: variant.size,
+      stock: String(variant.stock),
+      priceAdjustment: String(variant.priceAdjustment),
+      isActive: variant.isActive,
+    };
+  });
+}
+
 function blankVariant(stock = "0"): VariantDraft {
+  const clientId = crypto.randomUUID();
   return {
-    clientId: crypto.randomUUID(),
+    clientId,
+    groupId: clientId,
     name: "",
     colorCode: "",
     size: "",
@@ -261,8 +285,11 @@ function ImageList({
   aiGenerating,
   aiNeedImage,
   aiReady,
+  writing,
+  writingLabel,
   urls,
   onChange,
+  onProductPhoto,
 }: {
   label: string;
   uploadLabel: string;
@@ -278,8 +305,11 @@ function ImageList({
   aiGenerating: string;
   aiNeedImage: string;
   aiReady: string;
+  writing: boolean;
+  writingLabel: string;
   urls: string[];
   onChange: (urls: string[]) => void;
+  onProductPhoto?: (url: string) => void;
 }) {
   const explain = useDeskError();
   const personGroup = useId();
@@ -310,6 +340,7 @@ function ImageList({
 
     setUploading(true);
     setNote(null);
+    const startedEmpty = urls.length === 0;
     const next = [...urls];
     let failed: string | null = null;
     for (const file of files.slice(0, room)) {
@@ -331,6 +362,7 @@ function ImageList({
     setUploading(false);
     onChange(next);
     setNote(failed);
+    if (startedEmpty && next[0]) onProductPhoto?.(next[0]);
   }
 
   function addLink() {
@@ -346,7 +378,11 @@ function ImageList({
     }
     setNote(null);
     setLink("");
-    if (!urls.includes(url)) onChange([...urls, url]);
+    if (!urls.includes(url)) {
+      const next = [...urls, url];
+      onChange(next);
+      if (urls.length === 0) onProductPhoto?.(url);
+    }
   }
 
   async function prepareLifestyle() {
@@ -400,6 +436,7 @@ function ImageList({
           {note}
         </p>
       ) : null}
+      {writing ? <p className="mt-2 text-xs tracking-wide text-gold-bright">{writingLabel}</p> : null}
       {urls.length > 0 ? (
         <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {urls.map((url) => (
@@ -446,7 +483,7 @@ function ImageList({
                 value={value}
                 checked={person === value}
                 onChange={() => setPerson(value)}
-                className="accent-[#E5C158]"
+                className="accent-[#FF4D9A]"
               />
               {caption}
             </label>
@@ -541,11 +578,6 @@ function variantLabel(variant: Pick<DeskVariant, "name" | "size">) {
   return `${variant.name} · ${variant.size}`;
 }
 
-function signedAdjustment(amount: number) {
-  if (amount === 0) return "";
-  const formatted = formatDh(Math.abs(amount));
-  return amount > 0 ? `+${formatted}` : `−${formatted}`;
-}
 
 function VariantStock({ product }: { product: DeskProduct }) {
   const copy = useAdminCopy().products;
@@ -567,7 +599,7 @@ function VariantStock({ product }: { product: DeskProduct }) {
                 ) : null}
                 <span className="type-caption truncate text-foreground">
                   {variantLabel(variant)}
-                  {variant.priceAdjustment !== 0 ? <span className="text-gold-bright"> {signedAdjustment(variant.priceAdjustment)}</span> : null}
+                  {variant.priceAdjustment > 0 ? <span className="text-gold-bright"> {formatDh(variant.priceAdjustment)}</span> : null}
                 </span>
               </span>
               <span className="type-caption shrink-0 text-gold-bright">{fillCount(copy.inStock, variant.stock)}</span>
@@ -677,21 +709,15 @@ function draftFrom(product: DeskProduct): ProductDraft {
     category: product.categorySlug,
     imageUrls: product.imageUrls,
     stock: String(product.stock),
-    variants: product.variants.map((variant) => ({
-      clientId: variant.id,
-      name: variant.name,
-      colorCode: variant.colorCode,
-      size: variant.size,
-      stock: String(variant.stock),
-      priceAdjustment: String(variant.priceAdjustment),
-      isActive: variant.isActive,
-    })),
+    variants: groupedVariants(product.variants),
     ingredients: product.ingredients.map((item) => ({
       clientId: crypto.randomUUID(),
       name: item.name,
       benefit: item.benefit,
       icon: item.icon,
     })),
+    highlights: product.highlights,
+    traits: product.traits,
   };
 }
 
@@ -721,14 +747,15 @@ function ProductForm({
     onChange((current) => (current ? { ...current, [field]: value } : current));
   }
 
-  async function writeCopy() {
-    if (draft.title.trim().length < 2) {
+  async function writeCopy(imageUrl?: string) {
+    const photo = (imageUrl ?? draft.imageUrls[0] ?? "").trim();
+    if (!photo && draft.title.trim().length < 2) {
       setCopyNote(copy.copyNeedTitle);
       return;
     }
     setWriting(true);
     setCopyNote(null);
-    const result = await generateProductCopy({ title: draft.title, category: draft.category });
+    const result = await generateProductCopy({ title: draft.title, category: draft.category, imageUrl: photo });
     setWriting(false);
     if (!result.ok) {
       setCopyNote(explain(result.error));
@@ -738,7 +765,11 @@ function ProductForm({
       current
         ? {
             ...current,
+            title: photo ? result.title : current.title,
             description: result.description,
+            category: photo ? result.category : current.category,
+            highlights: result.highlights,
+            traits: result.traits,
             ingredients: result.ingredients.map((item) => ({ ...item, clientId: crypto.randomUUID() })),
           }
         : current,
@@ -774,7 +805,7 @@ function ProductForm({
               disabled={writing || busy}
               className="type-nav border border-gold-bright px-4 py-3 text-gold-bright disabled:opacity-40"
             >
-              {writing ? copy.copyGenerating : copy.copyGenerate}
+              {writing ? copy.copyGenerating : draft.imageUrls[0] ? copy.copyFromPhoto : copy.copyGenerate}
             </button>
             {copyNote ? (
               <p className={`mt-2 text-xs tracking-wide ${copyNote === copy.copyReady ? "text-gold-bright" : "text-[#E7B4A8]"}`} role={copyNote === copy.copyReady ? "status" : "alert"}>
@@ -790,6 +821,22 @@ function ProductForm({
           </div>
           <VariantEditor variants={draft.variants} onChange={onChange} />
           <IngredientEditor ingredients={draft.ingredients} onChange={onChange} />
+          <LineEditor
+            legend={copy.features}
+            lead={copy.featuresLead}
+            itemLabel={copy.feature}
+            addLabel={copy.addFeature}
+            lines={draft.highlights}
+            onChange={(highlights) => onChange((current) => (current ? { ...current, highlights } : current))}
+          />
+          <LineEditor
+            legend={copy.traits}
+            lead={copy.traitsLead}
+            itemLabel={copy.trait}
+            addLabel={copy.addTrait}
+            lines={draft.traits}
+            onChange={(traits) => onChange((current) => (current ? { ...current, traits } : current))}
+          />
           <label className="block">
             <span className="type-eyebrow">{copy.category}</span>
             <select
@@ -819,8 +866,11 @@ function ProductForm({
             aiGenerating={copy.aiGenerating}
             aiNeedImage={copy.aiNeedImage}
             aiReady={copy.aiReady}
+            writing={writing}
+            writingLabel={copy.copyGenerating}
             urls={draft.imageUrls}
             onChange={(imageUrls) => onChange((current) => (current ? { ...current, imageUrls } : current))}
+            onProductPhoto={(url) => void writeCopy(url)}
           />
         </div>
 
@@ -843,6 +893,49 @@ function ProductForm({
           </button>
         </div>
     </form>
+  );
+}
+
+function LineEditor({
+  legend,
+  lead,
+  itemLabel,
+  addLabel,
+  lines,
+  onChange,
+}: {
+  legend: string;
+  lead: string;
+  itemLabel: string;
+  addLabel: string;
+  lines: string[];
+  onChange: (lines: string[]) => void;
+}) {
+  return (
+    <fieldset className="border border-gold/25 px-4 py-4">
+      <legend className="type-eyebrow px-2">{legend}</legend>
+      <p className="type-caption">{lead}</p>
+      <div className="mt-4 space-y-3">
+        {lines.map((line, index) => (
+          <div key={`${legend}-${index}`} className="grid grid-cols-[1fr_auto] gap-2">
+            <input
+              value={line}
+              onChange={(event) => onChange(lines.map((item, itemIndex) => (itemIndex === index ? event.target.value : item)))}
+              className="border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-gold-bright"
+              aria-label={fillCount(itemLabel, index + 1)}
+            />
+            <button type="button" onClick={() => onChange(lines.filter((_, itemIndex) => itemIndex !== index))} className="type-caption px-2 text-foreground/70 hover:text-[#E7B4A8]">
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      {lines.length < 6 ? (
+        <button type="button" onClick={() => onChange([...lines, ""])} className="type-nav mt-4 border border-gold/40 px-3 py-3 text-foreground/80">
+          {addLabel}
+        </button>
+      ) : null}
+    </fieldset>
   );
 }
 
@@ -933,13 +1026,62 @@ function VariantEditor({
   variants: VariantDraft[];
   onChange: Dispatch<SetStateAction<ProductDraft>>;
 }) {
-  const copy = useAdminCopy().products;
+  const deskCopy = useAdminCopy();
+  const copy = deskCopy.products;
+  const locale = deskCopy.locale;
+  const [draftSize, setDraftSize] = useState<Record<string, string>>({});
+
   function changeVariants(update: (variants: VariantDraft[], stock: string) => VariantDraft[]) {
     onChange((current) => (current ? { ...current, variants: update(current.variants, current.stock) } : current));
   }
 
-  function update(clientId: string, patch: Partial<VariantDraft>) {
+  function patchGroup(groupId: string, patch: Partial<VariantDraft>) {
+    changeVariants((items) => items.map((variant) => (variant.groupId === groupId ? { ...variant, ...patch } : variant)));
+  }
+
+  function patchSize(clientId: string, patch: Partial<VariantDraft>) {
     changeVariants((items) => items.map((variant) => (variant.clientId === clientId ? { ...variant, ...patch } : variant)));
+  }
+
+  function saveSize(groupId: string, sample: VariantDraft) {
+    const size = (draftSize[groupId] ?? "").trim().replace(/\s+/g, " ");
+    if (size.length < 1 || size.length > 24) return;
+    const rows = variants.filter((variant) => variant.groupId === groupId);
+    if (rows.some((variant) => variant.size.trim().toLowerCase() === size.toLowerCase())) return;
+    const empty = rows.find((variant) => !variant.size.trim());
+    if (empty && rows.length === 1) {
+      patchSize(empty.clientId, { size });
+    } else {
+      changeVariants((items) => [
+        ...items,
+        {
+          clientId: crypto.randomUUID(),
+          groupId,
+          name: sample.name,
+          colorCode: sample.colorCode,
+          size,
+          stock: sample.stock || "0",
+          priceAdjustment: "0",
+          isActive: sample.isActive,
+        },
+      ]);
+    }
+    setDraftSize((current) => ({ ...current, [groupId]: "" }));
+  }
+
+  function removeSize(groupId: string, clientId: string) {
+    changeVariants((items) => {
+      const rows = items.filter((variant) => variant.groupId === groupId);
+      if (rows.length <= 1) return items.map((variant) => (variant.clientId === clientId ? { ...variant, size: "" } : variant));
+      return items.filter((variant) => variant.clientId !== clientId);
+    });
+  }
+
+  const groups: { id: string; rows: VariantDraft[] }[] = [];
+  for (const variant of variants) {
+    const existing = groups.find((group) => group.id === variant.groupId);
+    if (existing) existing.rows.push(variant);
+    else groups.push({ id: variant.groupId, rows: [variant] });
   }
 
   return (
@@ -947,55 +1089,92 @@ function VariantEditor({
       <legend className="type-eyebrow px-2">{copy.variants}</legend>
       <p className="type-caption">{copy.variantsLead}</p>
       <div className="mt-4 space-y-3">
-        {variants.map((variant, index) => (
-          <div key={variant.clientId} className="border border-gold/20 px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="type-caption text-gold-bright">{fillCount(copy.variant, index + 1)}</span>
-              <button
-                type="button"
-                onClick={() => changeVariants((items) => items.filter((item) => item.clientId !== variant.clientId))}
-                className="type-caption text-foreground/70 hover:text-[#E7B4A8]"
-              >
-                {copy.removeVariant}
-              </button>
-            </div>
-            <div className="mt-3 grid gap-3">
-              <Field label={copy.shade} value={variant.name} placeholder="Ruby Gold" onChange={(value) => update(variant.clientId, { name: value })} />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
+        {groups.map((group, index) => {
+          const sample = group.rows[0];
+          const saved = group.rows.filter((variant) => variant.size.trim());
+          const pending = draftSize[group.id] ?? "";
+          return (
+            <div key={group.id} className="border border-gold/20 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="type-caption text-gold-bright">{fillCount(copy.variant, index + 1)}</span>
+                <button
+                  type="button"
+                  onClick={() => changeVariants((items) => items.filter((item) => item.groupId !== group.id))}
+                  className="type-caption text-foreground/70 hover:text-[#E7B4A8]"
+                >
+                  {copy.removeVariant}
+                </button>
+              </div>
+              <div className="mt-3 grid gap-3">
+                <Field label={copy.shade} value={sample.name} placeholder="Ruby Gold" onChange={(value) => patchGroup(group.id, { name: value })} />
+                <ColorField
                   label={copy.color}
-                  value={variant.colorCode}
+                  value={sample.colorCode}
                   placeholder="#8C1C13"
-                  onChange={(value) => update(variant.clientId, { colorCode: value })}
+                  onChange={(value) => {
+                    const name = shadeNameForColor(value, locale);
+                    patchGroup(group.id, name ? { colorCode: value, name } : { colorCode: value });
+                  }}
                 />
-                <Field label={copy.volume} value={variant.size} placeholder="50ml" onChange={(value) => update(variant.clientId, { size: value })} />
+                {saved.length > 0 ? (
+                  <ul className="space-y-2">
+                    {saved.map((variant) => (
+                      <li key={variant.clientId} className="grid gap-2 border border-gold/20 px-3 py-3 sm:grid-cols-[7rem_1fr_1fr_auto] sm:items-end">
+                        <p dir="ltr" className="type-nav py-3 text-foreground">
+                          {variant.size}
+                        </p>
+                        <Field label={copy.variantStock} value={variant.stock} inputMode="numeric" onChange={(value) => patchSize(variant.clientId, { stock: value })} />
+                        <Field
+                          label={copy.adjustment}
+                          value={variant.priceAdjustment}
+                          placeholder="0"
+                          onChange={(value) => patchSize(variant.clientId, { priceAdjustment: value })}
+                        />
+                        <button type="button" onClick={() => removeSize(group.id, variant.clientId)} className="type-caption px-2 py-3 text-foreground/70 hover:text-[#E7B4A8]">
+                          {copy.removeVariant}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="flex items-end gap-2">
+                  <label className="block min-w-0 flex-1">
+                    <span className="type-eyebrow">{copy.volume}</span>
+                    <input
+                      dir="ltr"
+                      value={pending}
+                      placeholder={copy.volumeHint}
+                      onChange={(event) => setDraftSize((current) => ({ ...current, [group.id]: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          saveSize(group.id, sample);
+                        }
+                      }}
+                      className="mt-2 w-full border border-gold/30 bg-card px-3 py-3 text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => saveSize(group.id, sample)}
+                    className="type-nav border border-gold-bright px-4 py-3 text-gold-bright"
+                  >
+                    {copy.saveSize}
+                  </button>
+                </div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={sample.isActive}
+                    onChange={(event) => patchGroup(group.id, { isActive: event.target.checked })}
+                    className="accent-[#E2187A]"
+                  />
+                  <span className="type-caption text-foreground">{copy.active}</span>
+                </label>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label={copy.variantStock}
-                  value={variant.stock}
-                  inputMode="numeric"
-                  onChange={(value) => update(variant.clientId, { stock: value })}
-                />
-                <Field
-                  label={copy.adjustment}
-                  value={variant.priceAdjustment}
-                  placeholder="0"
-                  onChange={(value) => update(variant.clientId, { priceAdjustment: value })}
-                />
-              </div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={variant.isActive}
-                  onChange={(event) => update(variant.clientId, { isActive: event.target.checked })}
-                  className="accent-[#D4AF37]"
-                />
-                <span className="type-caption text-foreground">{copy.active}</span>
-              </label>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <button
         type="button"
@@ -1005,6 +1184,55 @@ function VariantEditor({
         {copy.addVariant}
       </button>
     </fieldset>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+}) {
+  const fieldId = useId();
+  const parsed = /^#([0-9a-fA-F]{6})$/.exec(value.trim());
+  const swatch = parsed ? `#${parsed[1]}` : "#E2187A";
+
+  return (
+    <div>
+      <span id={fieldId} className="type-eyebrow">
+        {label}
+      </span>
+      <div className="mt-2 flex items-center gap-2">
+        <input
+          dir="ltr"
+          aria-labelledby={fieldId}
+          value={value}
+          placeholder={placeholder}
+          spellCheck={false}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full border border-gold/30 bg-card px-3 py-3 text-left text-sm text-foreground outline-none placeholder:text-foreground/35 focus:border-gold-bright"
+        />
+        <label
+          className="relative size-12 shrink-0 cursor-pointer border border-gold/40"
+          style={{ background: parsed ? swatch : "transparent" }}
+        >
+          <span className="sr-only">{label}</span>
+          <input
+            type="color"
+            value={swatch}
+            aria-label={label}
+            onChange={(event) => onChange(event.target.value.toUpperCase())}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+          />
+          {parsed ? null : <span aria-hidden className="pointer-events-none absolute inset-1 border border-dashed border-gold/50" />}
+        </label>
+      </div>
+    </div>
   );
 }
 

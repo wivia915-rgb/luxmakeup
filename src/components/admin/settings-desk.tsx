@@ -125,7 +125,7 @@ export function SettingsDesk({ settings }: { settings: StoreSettings }) {
                 type="checkbox"
                 checked={draft.maintenanceMode}
                 onChange={(event) => setField("maintenanceMode", event.target.checked)}
-                className="mt-0.5 accent-[#D4AF37]"
+                className="mt-0.5 accent-[#E2187A]"
               />
               <span>
                 <span className="type-eyebrow">{copy.maintenance}</span>

@@ -28,6 +28,7 @@ export type Dictionary = {
   product: {
     collection: string;
     shade: string;
+    size: string;
     quantity: string;
     decrease: string;
     increase: string;
@@ -38,6 +39,8 @@ export type Dictionary = {
     previousPhoto: string;
     nextPhoto: string;
     related: string;
+    features: string;
+    traits: string;
   };
   checkout: {
     eyebrow: string;
@@ -160,13 +163,14 @@ export const messages: Record<Locale, Dictionary> = {
       eyebrow: "Maison de beauté",
       line1: "Redefine",
       line2: "Elegance",
-      line3: "with Lux Makeup",
+      line3: "El Idrissi",
       cta: "Explore Collection",
       turn: "Turn the bottle",
     },
     product: {
       collection: "Collection",
       shade: "Shade",
+      size: "Size",
       quantity: "Quantity",
       decrease: "Decrease quantity",
       increase: "Increase quantity",
@@ -177,6 +181,8 @@ export const messages: Record<Locale, Dictionary> = {
       previousPhoto: "Previous photo",
       nextPhoto: "Next photo",
       related: "Related products",
+      features: "Features",
+      traits: "Characteristics",
     },
     checkout: {
       eyebrow: "Cash on delivery",
@@ -260,15 +266,15 @@ export const messages: Record<Locale, Dictionary> = {
     maisonEyebrow: "The maison",
     maisonQuote: "We finish the face the way a perfumer finishes a formula — one precise note at a time.",
     maisonBody:
-      "Lux Makeup is an ultra-high-end house of complexion, fragrance, and color. The room stays dark so gold, pigment, and skin can speak.",
-    footer: "Makeup, perfume, and beauty. Composed in a dark atelier.",
-    footerRights: "© {year} Lux Makeup. All rights reserved.",
+      "El Idrissi is a house of perfume, makeup, and color. Black letters, a white ground, and the lotus pink.",
+    footer: "Makeup, perfume, and beauty. Signed El Idrissi.",
+    footerRights: "© {year} El Idrissi. All rights reserved.",
     footerTerms: "Terms of use",
     footerUsage: "Usage policy",
     footerAbout: "About",
     footerContact: "Contact",
     footerCategories: "Categories",
-    whatsappFloat: "Message Lux Makeup on WhatsApp",
+    whatsappFloat: "Message El Idrissi on WhatsApp",
     agent: {
       open: "Ask the atelier",
       close: "Close the advisor",
@@ -308,13 +314,14 @@ export const messages: Record<Locale, Dictionary> = {
       eyebrow: "Maison de beauté",
       line1: "Redéfinir",
       line2: "l'élégance",
-      line3: "avec Lux Makeup",
+      line3: "El Idrissi",
       cta: "Explorer la collection",
       turn: "Tourner le flacon",
     },
     product: {
       collection: "Collection",
       shade: "Teinte",
+      size: "Contenance",
       quantity: "Quantité",
       decrease: "Diminuer la quantité",
       increase: "Augmenter la quantité",
@@ -325,6 +332,8 @@ export const messages: Record<Locale, Dictionary> = {
       previousPhoto: "Photo précédente",
       nextPhoto: "Photo suivante",
       related: "Produits associés",
+      features: "Atouts",
+      traits: "Caractéristiques",
     },
     checkout: {
       eyebrow: "Paiement à la livraison",
@@ -408,15 +417,15 @@ export const messages: Record<Locale, Dictionary> = {
     maisonEyebrow: "La maison",
     maisonQuote: "Nous finissons le visage comme un parfumeur finit une formule — une note précise à la fois.",
     maisonBody:
-      "Lux Makeup est une maison de teint, de parfum et de couleur. La pièce reste sombre pour que l'or, le pigment et la peau parlent.",
-    footer: "Maquillage, parfum et beauté. Composé dans un atelier sombre.",
-    footerRights: "© {year} Lux Makeup. Tous droits réservés.",
+      "El Idrissi est une maison de parfum, de maquillage et de couleur. Lettres noires, fond blanc, et le rose du lotus.",
+    footer: "Maquillage, parfum et beauté. Signé El Idrissi.",
+    footerRights: "© {year} El Idrissi. Tous droits réservés.",
     footerTerms: "Conditions d'utilisation",
     footerUsage: "Politique d'utilisation",
     footerAbout: "À propos",
     footerContact: "Contact",
     footerCategories: "Catégories",
-    whatsappFloat: "Écrire à Lux Makeup sur WhatsApp",
+    whatsappFloat: "Écrire à El Idrissi sur WhatsApp",
     agent: {
       open: "Demander à l'atelier",
       close: "Fermer le conseiller",
@@ -482,13 +491,14 @@ export const messages: Record<Locale, Dictionary> = {
       eyebrow: "دار الجمال",
       line1: "صياغة",
       line2: "الأناقة",
-      line3: "مع لوكس ميكاب",
+      line3: "إل إدريسي",
       cta: "استكشف المجموعة",
       turn: "أدر القنينة",
     },
     product: {
       collection: "المجموعة",
       shade: "الدرجة",
+      size: "الحجم",
       quantity: "الكمية",
       decrease: "إنقاص الكمية",
       increase: "زيادة الكمية",
@@ -499,6 +509,8 @@ export const messages: Record<Locale, Dictionary> = {
       previousPhoto: "الصورة السابقة",
       nextPhoto: "الصورة التالية",
       related: "منتجات مشابهة",
+      features: "المميزات",
+      traits: "الخصائص",
     },
     checkout: {
       eyebrow: "الدفع عند الاستلام",
@@ -581,15 +593,15 @@ export const messages: Record<Locale, Dictionary> = {
     },
     maisonEyebrow: "الدار",
     maisonQuote: "نُكمل الوجه كما يُكمل العطّار تركيبته — نغمة دقيقة في كل مرة.",
-    maisonBody: "لوكس ميكاب دار للبشرة والعطر واللون. تبقى الغرفة معتمة ليصمت المكان ويتكلم الذهب والصبغة والجلد.",
-    footer: "مكياج وعطر وجمال. يُصاغ في مشغل مظلم.",
-    footerRights: "© {year} Lux Makeup. جميع الحقوق محفوظة.",
+    maisonBody: "إل إدريسي دار للعطر والمكياج واللون. حروف سوداء، وأرض بيضاء، ووردي اللوتس.",
+    footer: "مكياج وعطر وجمال. بتوقيع إل إدريسي.",
+    footerRights: "© {year} El Idrissi. جميع الحقوق محفوظة.",
     footerTerms: "شروط الاستخدام",
     footerUsage: "سياسة الاستخدام",
     footerAbout: "حول",
     footerContact: "اتصل بنا",
     footerCategories: "التصنيفات",
-    whatsappFloat: "راسلوا لوكس ميكاب على واتساب",
+    whatsappFloat: "راسلوا إل إدريسي على واتساب",
     agent: {
       open: "اسأل الدار",
       close: "إغلاق المستشار",

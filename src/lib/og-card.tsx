@@ -52,13 +52,13 @@ export async function luxCard({ eyebrow, title, detail, price, badge, detailGold
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", color: "#E5C158", fontSize: 20, letterSpacing: 6 }}>LUX MAKEUP</div>
+            <div style={{ display: "flex", color: "#FF4D9A", fontSize: 20, letterSpacing: 6 }}>EL IDRISSI</div>
             {badge ? (
               <div
                 style={{
                   display: "flex",
-                  border: "1px solid #E5C158",
-                  color: "#E5C158",
+                  border: "1px solid #FF4D9A",
+                  color: "#FF4D9A",
                   fontSize: 18,
                   letterSpacing: 3,
                   padding: "8px 14px",
@@ -70,7 +70,7 @@ export async function luxCard({ eyebrow, title, detail, price, badge, detailGold
           </div>
 
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", color: "#E5C158", fontSize: 18, letterSpacing: 5 }}>{eyebrow.toUpperCase()}</div>
+            <div style={{ display: "flex", color: "#FF4D9A", fontSize: 18, letterSpacing: 5 }}>{eyebrow.toUpperCase()}</div>
             <div
               style={{
                 display: "flex",
@@ -92,7 +92,7 @@ export async function luxCard({ eyebrow, title, detail, price, badge, detailGold
                 fontFamily: detailGold ? "Cormorant Garamond" : "Outfit",
                 fontSize: detailGold ? 42 : 26,
                 lineHeight: 1.35,
-                color: detailGold ? "#E5C158" : "rgba(248,248,248,0.78)",
+                color: detailGold ? "#FF4D9A" : "rgba(248,248,248,0.78)",
               }}
             >
               {clip(detail, 150)}
@@ -100,8 +100,8 @@ export async function luxCard({ eyebrow, title, detail, price, badge, detailGold
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", width: 180, height: 1, background: "#D4AF37" }} />
-            <div style={{ display: "flex", color: "#D4AF37", fontSize: 28, letterSpacing: 3 }}>{price ?? "ATELIER"}</div>
+            <div style={{ display: "flex", width: 180, height: 1, background: "#E2187A" }} />
+            <div style={{ display: "flex", color: "#E2187A", fontSize: 28, letterSpacing: 3 }}>{price ?? "ATELIER"}</div>
           </div>
         </div>
 
@@ -122,15 +122,15 @@ function Bottle() {
   return (
     <div style={{ display: "flex", width: 230, alignItems: "center", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: 52, height: 26, background: "#D4AF37" }} />
-        <div style={{ width: 34, height: 20, background: "#E5C158" }} />
+        <div style={{ width: 52, height: 26, background: "#E2187A" }} />
+        <div style={{ width: 34, height: 20, background: "#FF4D9A" }} />
         <div
           style={{
             display: "flex",
             width: 128,
             height: 248,
             background: "#1A1A1A",
-            border: "2px solid #E5C158",
+            border: "2px solid #FF4D9A",
             alignItems: "flex-end",
             justifyContent: "center",
           }}

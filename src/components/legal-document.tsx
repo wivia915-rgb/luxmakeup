@@ -17,7 +17,7 @@ export function LegalDocumentView({
     <main id="main" className="px-5 py-16 md:px-10 md:py-24">
       <p className="type-caption">
         <Link href="/" className="text-gold-bright hover:text-foreground">
-          Lux Makeup
+          El Idrissi
         </Link>
       </p>
       <p className="type-eyebrow mt-8">{page.eyebrow}</p>

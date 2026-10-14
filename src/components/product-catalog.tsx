@@ -17,7 +17,7 @@ export async function ProductCatalog() {
   const pieces = stored.length > 0 ? stored : products.map(memoryPiece);
 
   return (
-    <section id="edit" className="scroll-mt-28 px-5 py-16 [content-visibility:auto] [contain-intrinsic-size:auto_2400px] md:px-10 md:py-20">
+    <section id="edit" className="scroll-mt-28 px-5 py-16 md:px-10 md:py-20">
       <div className="mb-10 flex flex-col gap-4 md:mb-12 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="type-eyebrow">{copy.catalog.eyebrow}</p>
@@ -111,8 +111,8 @@ function GoldBadge({ solid = false, children }: { solid?: boolean; children: Rea
     <span
       className={
         solid
-          ? "type-caption bg-[#D4AF37] px-2.5 py-1 text-[#0D0D0D]"
-          : "type-caption border border-[#E5C158] bg-black/65 px-2.5 py-1 text-[#E5C158] backdrop-blur-sm"
+          ? "type-caption bg-[#E2187A] px-2.5 py-1 text-white"
+          : "type-caption border border-[#FF4D9A] bg-black/65 px-2.5 py-1 text-[#FF4D9A] backdrop-blur-sm"
       }
     >
       {children}

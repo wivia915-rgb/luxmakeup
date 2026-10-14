@@ -34,10 +34,13 @@ export type DeskProduct = {
   categorySlug: DeskCategorySlug;
   variants: DeskVariant[];
   ingredients: DeskIngredient[];
+  highlights: string[];
+  traits: string[];
 };
 
 export type VariantDraft = {
   clientId: string;
+  groupId: string;
   name: string;
   colorCode: string;
   size: string;
@@ -68,6 +71,8 @@ export type ProductDraft = {
   stock: string;
   variants: VariantDraft[];
   ingredients: IngredientDraft[];
+  highlights: string[];
+  traits: string[];
 };
 
 export type VariantWrite = {
@@ -94,6 +99,8 @@ export type ProductWrite = {
   stock: number;
   variants: VariantWrite[];
   ingredients: IngredientWrite[];
+  highlights: string[];
+  traits: string[];
 };
 
 const emptyDesk = { connected: false as const, products: [] as DeskProduct[] };
@@ -146,10 +153,14 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
     return { ok: false, error: "Stock cannot pass 9999." };
   }
 
-  const variants = parseVariants(input.variants, price);
+  const variants = parseVariants(input.variants);
   if (!variants.ok) return variants;
   const ingredients = parseIngredients(input.ingredients);
   if (!ingredients.ok) return ingredients;
+  const highlights = parseLines(input.highlights, "feature");
+  if (!highlights.ok) return highlights;
+  const traits = parseLines(input.traits, "trait");
+  if (!traits.ok) return traits;
 
   const countedStock = variants.value.length > 0 ? variants.value.reduce((sum, variant) => sum + (variant.isActive ? variant.stock : 0), 0) : stock;
 
@@ -164,6 +175,8 @@ export function parseProductDraft(input: ProductDraft): { ok: true; value: Produ
       stock: countedStock,
       variants: variants.value,
       ingredients: ingredients.value,
+      highlights: highlights.value,
+      traits: traits.value,
     },
   };
 }
@@ -197,7 +210,28 @@ function parseIngredients(input: IngredientDraft[] | undefined): { ok: true; val
   return { ok: true, value };
 }
 
-function parseVariants(input: VariantDraft[] | undefined, price: number): { ok: true; value: VariantWrite[] } | { ok: false; error: string } {
+function parseLines(
+  input: string[] | undefined,
+  kind: "feature" | "trait",
+): { ok: true; value: string[] } | { ok: false; error: string } {
+  if (input === undefined) return { ok: true, value: [] };
+  if (!Array.isArray(input)) return { ok: false, error: kind === "feature" ? "Features could not be read." : "Characteristics could not be read." };
+  if (input.length > 6) {
+    return { ok: false, error: kind === "feature" ? "A piece can hold up to 6 features." : "A piece can hold up to 6 characteristics." };
+  }
+  const value: string[] = [];
+  for (const item of input) {
+    const line = String(item ?? "").trim().replace(/\s+/g, " ");
+    if (!line) continue;
+    if (line.length < 2 || line.length > 120) {
+      return { ok: false, error: kind === "feature" ? "A feature needs 2 to 120 characters." : "A characteristic needs 2 to 120 characters." };
+    }
+    value.push(line);
+  }
+  return { ok: true, value };
+}
+
+function parseVariants(input: VariantDraft[] | undefined): { ok: true; value: VariantWrite[] } | { ok: false; error: string } {
   if (input === undefined) return { ok: true, value: [] };
   if (!Array.isArray(input)) return { ok: false, error: "Variants could not be read." };
   if (input.length > 12) return { ok: false, error: "A piece can hold up to 12 variants." };
@@ -231,12 +265,11 @@ function parseVariants(input: VariantDraft[] | undefined, price: number): { ok: 
     }
 
     const adjustmentText = String(variant?.priceAdjustment ?? "0").trim();
-    if (!/^-?\d+$/.test(adjustmentText)) {
-      return { ok: false, error: `${label} price adjustment is a whole amount in DH.` };
+    if (!/^\d+$/.test(adjustmentText)) {
+      return { ok: false, error: `${label} price is a whole amount in DH.` };
     }
     const priceAdjustment = Number(adjustmentText);
-    const adjusted = price + priceAdjustment;
-    if (adjusted < 1 || adjusted > 100000) {
+    if (priceAdjustment > 100000) {
       return { ok: false, error: `${label} must keep the price between 1 and 100 000 DH.` };
     }
 
@@ -284,6 +317,8 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
         stock: true,
         available: true,
         images: true,
+        highlights: true,
+        traits: true,
         category: { select: { name: true, slug: true } },
         variants: {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -324,6 +359,8 @@ export async function getProductDesk(): Promise<{ connected: boolean; products: 
           isActive: variant.isActive,
         })),
         ingredients: [],
+        highlights: product.highlights,
+        traits: product.traits,
       })),
     };
   } catch (error) {
@@ -345,6 +382,8 @@ export async function getDeskProduct(id: string): Promise<DeskProduct | null> {
         stock: true,
         available: true,
         images: true,
+        highlights: true,
+        traits: true,
         category: { select: { name: true, slug: true } },
         variants: {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -391,6 +430,8 @@ export async function getDeskProduct(id: string): Promise<DeskProduct | null> {
         if (!icon) return [];
         return [{ name: item.name, benefit: item.benefit, icon }];
       }),
+      highlights: product.highlights,
+      traits: product.traits,
     };
   } catch (error) {
     console.error("Product editor could not be loaded", error instanceof Error ? error.name : "unknown");
