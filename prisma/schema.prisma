@@ -174,6 +174,28 @@ model StoreSettings {
   @@map("store_settings")
 }
 
+enum ReviewSentiment {
+  positive
+  negative
+  held
+}
+
+model ProductReview {
+  id          String          @id @default(cuid())
+  productSlug String
+  authorName  String
+  stars       Int
+  body        String
+  imageUrl    String?
+  sentiment   ReviewSentiment @default(held)
+  note        String          @default("")
+  createdAt   DateTime        @default(now())
+
+  @@index([productSlug, createdAt(sort: Desc)])
+  @@index([sentiment, createdAt(sort: Desc)])
+  @@map("product_reviews")
+}
+
 model ProductMedia {
   id        String   @id @default(cuid())
   mime      String

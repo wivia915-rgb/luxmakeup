@@ -5,6 +5,7 @@ import { messages } from "@/lib/messages";
 import { getProductPage, type ProductPageData } from "@/lib/product-story";
 import { shippingRatesFrom } from "@/lib/cod";
 import { getStoreSettings } from "@/lib/store-settings";
+import { listProductReviews } from "@/lib/product-reviews";
 import { getRelatedPieces, getStorefrontPiece } from "@/lib/storefront-catalog";
 import { formatDh, products } from "@/lib/products";
 import { siteUrl } from "@/lib/site";
@@ -62,9 +63,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const catalog = story ? null : await getStorefrontPiece(slug, locale);
   const product = story ?? (catalog ? catalogPageFrom(catalog) : null);
   if (!product) notFound();
-  const [settings, related] = await Promise.all([
+  const [settings, related, reviews] = await Promise.all([
     getStoreSettings(),
     getRelatedPieces(product.id, product.category, locale),
+    listProductReviews(product.id),
   ]);
 
   const jsonLd = {
@@ -92,6 +94,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         image={catalog?.image ?? ""}
         images={catalog?.images ?? []}
         related={related}
+        reviews={reviews}
+        locale={locale}
         copy={messages[locale]}
       />
     </main>

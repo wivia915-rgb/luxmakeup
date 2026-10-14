@@ -41,6 +41,25 @@ export type Dictionary = {
     related: string;
     features: string;
     traits: string;
+    reviews: string;
+    reviewsTitle: string;
+    reviewName: string;
+    reviewStars: string;
+    reviewStar: string;
+    reviewBody: string;
+    reviewPhoto: string;
+    reviewPhotoAdd: string;
+    reviewPhotoRemove: string;
+    reviewPhotoInvalid: string;
+    reviewSend: string;
+    reviewSending: string;
+    reviewThanks: string;
+    reviewReceived: string;
+    reviewEmpty: string;
+    reviewNeedName: string;
+    reviewNeedBody: string;
+    reviewNeedStars: string;
+    reviewFailed: string;
   };
   checkout: {
     eyebrow: string;
@@ -183,6 +202,25 @@ export const messages: Record<Locale, Dictionary> = {
       related: "Related products",
       features: "Features",
       traits: "Characteristics",
+      reviews: "Reviews",
+      reviewsTitle: "Customer reviews",
+      reviewName: "Name",
+      reviewStars: "Rating",
+      reviewStar: "Star {count}",
+      reviewBody: "Your review",
+      reviewPhoto: "Photo",
+      reviewPhotoAdd: "Add a photo",
+      reviewPhotoRemove: "Remove photo",
+      reviewPhotoInvalid: "Use a JPEG, PNG, or WebP under 1 MB.",
+      reviewSend: "Publish review",
+      reviewSending: "Publishing",
+      reviewThanks: "Thank you. Your review is on the piece.",
+      reviewReceived: "Thank you. We received your review.",
+      reviewEmpty: "Be the first to review this piece.",
+      reviewNeedName: "Add your name.",
+      reviewNeedBody: "Write a few words.",
+      reviewNeedStars: "Choose a star rating.",
+      reviewFailed: "The review could not be saved.",
     },
     checkout: {
       eyebrow: "Cash on delivery",
@@ -334,6 +372,25 @@ export const messages: Record<Locale, Dictionary> = {
       related: "Produits associés",
       features: "Atouts",
       traits: "Caractéristiques",
+      reviews: "Avis",
+      reviewsTitle: "Avis des clientes",
+      reviewName: "Nom",
+      reviewStars: "Note",
+      reviewStar: "Étoile {count}",
+      reviewBody: "Votre avis",
+      reviewPhoto: "Photo",
+      reviewPhotoAdd: "Ajouter une photo",
+      reviewPhotoRemove: "Retirer la photo",
+      reviewPhotoInvalid: "Choisissez un JPEG, PNG ou WebP de moins de 1 Mo.",
+      reviewSend: "Publier l'avis",
+      reviewSending: "Publication",
+      reviewThanks: "Merci. Votre avis est sur la pièce.",
+      reviewReceived: "Merci. Nous avons reçu votre avis.",
+      reviewEmpty: "Soyez la première à laisser un avis.",
+      reviewNeedName: "Ajoutez votre nom.",
+      reviewNeedBody: "Écrivez quelques mots.",
+      reviewNeedStars: "Choisissez une note.",
+      reviewFailed: "L'avis n'a pas pu être enregistré.",
     },
     checkout: {
       eyebrow: "Paiement à la livraison",
@@ -511,6 +568,25 @@ export const messages: Record<Locale, Dictionary> = {
       related: "منتجات مشابهة",
       features: "المميزات",
       traits: "الخصائص",
+      reviews: "الآراء",
+      reviewsTitle: "آراء الزبناء",
+      reviewName: "الاسم",
+      reviewStars: "التقييم",
+      reviewStar: "نجمة {count}",
+      reviewBody: "رأيكم",
+      reviewPhoto: "صورة",
+      reviewPhotoAdd: "رفع صورة",
+      reviewPhotoRemove: "حذف الصورة",
+      reviewPhotoInvalid: "اختاروا صورة JPEG أو PNG أو WebP أقل من 1 ميغا.",
+      reviewSend: "انشر الرأي",
+      reviewSending: "جارٍ النشر",
+      reviewThanks: "شكراً. رأيكم ظهر مع المنتج.",
+      reviewReceived: "شكراً. وصلنا رأيكم.",
+      reviewEmpty: "كونوا أول من يكتب رأياً.",
+      reviewNeedName: "اكتبوا الاسم.",
+      reviewNeedBody: "اكتبوا الرأي.",
+      reviewNeedStars: "اختاروا عدد النجوم.",
+      reviewFailed: "تعذّر حفظ الرأي.",
     },
     checkout: {
       eyebrow: "الدفع عند الاستلام",

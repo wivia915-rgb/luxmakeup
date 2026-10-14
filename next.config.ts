@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "@react-three/drei"],
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
   },
   images: {
     formats: ["image/avif", "image/webp"],

@@ -3,11 +3,14 @@
 import { CodDrawer } from "@/components/cod-drawer";
 import { CouponField, type AppliedCoupon } from "@/components/coupon-field";
 import { PiecePhoto } from "@/components/piece-photo";
+import { ProductReviews } from "@/components/product-reviews";
 import { ProductStage } from "@/components/product-stage";
 import type { IngredientIcon, ProductPageData, Shade } from "@/lib/product-story";
 import { addToBag } from "@/lib/bag-store";
 import { defaultShippingRates, type ShippingRates } from "@/lib/cod";
+import type { Locale } from "@/lib/locale";
 import type { Dictionary } from "@/lib/messages";
+import type { PublicReview } from "@/lib/product-reviews";
 import { formatDh, type Category, type Mood } from "@/lib/products";
 import { variantUnitPrice } from "@/lib/variant-price";
 import type { StorefrontPiece } from "@/lib/storefront-catalog";
@@ -31,6 +34,8 @@ export function ProductDetail({
   image = "",
   images = [],
   related = [],
+  reviews = [],
+  locale = "ar",
   copy,
 }: {
   product: ProductPageData;
@@ -38,6 +43,8 @@ export function ProductDetail({
   image?: string;
   images?: string[];
   related?: StorefrontPiece[];
+  reviews?: PublicReview[];
+  locale?: Locale;
   copy: Dictionary;
 }) {
   const photos = images.length > 0 ? images : image ? [image] : [];
@@ -171,6 +178,15 @@ export function ProductDetail({
         </div>
 
         <IngredientBreakdown ingredients={product.ingredients} copy={copy.product} />
+        <ProductReviews
+          slug={product.id}
+          name={product.name}
+          image={photos[0] ?? ""}
+          motif={product.motif}
+          reviews={reviews}
+          locale={locale}
+          copy={copy.product}
+        />
         <RelatedPieces pieces={related} copy={copy} />
       </article>
 
